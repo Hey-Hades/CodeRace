@@ -202,9 +202,9 @@ The response shows:
 
 ```json
 {
-  "gemini": false,
-  "judge0": false,
-  "supabase": false
+  "gemini": true,
+  "judge0": true,
+  "supabase": true
 }
 ```
 
