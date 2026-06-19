@@ -1,18 +1,21 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import Home from "./components/Home.jsx";
+import Home from './components/Home.jsx';
+import Lobby from './components/Lobby.jsx';
+import Race from './components/Race.jsx';
+import Result from './components/Result.jsx';
 import './App.css';
 
-// A tiny helper component for the Navbar so it highlights the active page
 const NavBar = () => {
   const location = useLocation();
   
   return (
     <div className="nav">
-      <div className="logo">Code<span>Race</span> ..</div>
+      <div className="logo">Code<span>Race</span>..</div>
       <div className="nav-links">
         <Link to="/" className={`nl ${location.pathname === '/' ? 'active' : ''}`}>Home</Link>
         <Link to="/lobby" className={`nl ${location.pathname === '/lobby' ? 'active' : ''}`}>Lobby</Link>
         <Link to="/race" className={`nl ${location.pathname === '/race' ? 'active' : ''}`}>Race</Link>
+        <Link to="/result" className={`nl ${location.pathname === '/result' ? 'active' : ''}`}>Result</Link>
       </div>
     </div>
   );
@@ -25,8 +28,9 @@ function App() {
         <NavBar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/lobby" element={<div style={{padding: '2rem', textAlign: 'center'}}>Lobby UI coming next...</div>} />
-          <Route path="/race" element={<div style={{padding: '2rem', textAlign: 'center'}}>Race UI coming next...</div>} />
+          <Route path="/lobby" element={<Lobby />} />
+          <Route path="/race" element={<Race />} />
+          <Route path="/result" element={<Result />} />
         </Routes>
       </div>
     </Router>

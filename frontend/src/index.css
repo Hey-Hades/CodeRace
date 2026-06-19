@@ -1,28 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
-* {
-  box-sizing: border-box;
+/* 1. Kill the browser's default margins and hide window scrollbars */
+html, body {
   margin: 0;
   padding: 0;
-}
-
-body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
   background: #0a0a0a;
   color: #e8e8e8;
   font-family: 'JetBrains Mono', monospace;
-  display: flex;
-  justify-content: center;
-  padding: 2rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* 2. Hide internal panel scrollbars but keep mouse-wheel scrolling functional */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
 }
 
 /* The main app wrapper */
 .r {
   background: #0a0a0a;
-  border-radius: 12px;
-  overflow: hidden;
-  min-height: 500px;
-  width: 100%;
-  max-width: 1200px;
+  color: #e8e8e8;
+  width: 100vw; 
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Nav Styles */
@@ -48,3 +60,41 @@ body {
 .btn-sm.green { background: #1a3a1a; border: 1px solid #2d5a2d; color: #4caf50; font-weight: 600; }
 .divider { height: 1px; background: #1e1e1e; margin: 16px 0; }
 .section-label { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+/* --- NEW TAB STYLES --- */
+.tabs {
+  display: flex;
+  background: #0f0f0f;
+  border-bottom: 1px solid #242424;
+}
+
+.tab {
+  position: relative;
+  padding: 14px 22px;
+  border: none;
+  background: transparent;
+  color: #6d6d6d;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.tab:hover {
+  color: #cfcfcf;
+}
+
+.tab.active {
+  color: #ff6b2b; /* Kept aligned with your primary neon orange */
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 2px;
+  background: #ff6b2b;
+}
