@@ -1,3 +1,4 @@
+import userRoutes from './routes/user.route.js';
 import codeRoutes from './routes/code.route.js';
 import express from 'express';
 import { createServer } from 'http';
@@ -19,10 +20,17 @@ const io = new Server(httpServer, {
   }
 });
 
+// MAKE IO GLOBAL: This allows your code.controller.js to broadcast wins!
+global.io = io; 
+
 // Basic Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Routes
 app.use('/api/code', codeRoutes);
+app.use('/api/users', userRoutes); // <-- Added this to serve the Leaderboard!
+
 // Sanity check route to ensure Express is working
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'healthy', platform: 'CodeRace' });

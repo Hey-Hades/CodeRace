@@ -1,100 +1,129 @@
-import { saveMatchToDatabase } from './match.controller.js';
+import { declareWinner } from './match.controller.js';
+import supabase from '../config/supabase.js';
 
-// In-memory store for active rooms
-// In production, this could be moved to Redis for scalability
 const activeRooms = new Map();
 
 export const handleSocketConnection = (io, socket) => {
   console.log(`🟢 Socket connected: ${socket.id}`);
 
-  // 1. Create a Room
-  socket.on("create_room", ({ difficulty, matchType }) => {
-    // Generate a 6-character uppercase room ID (e.g., A7X9P2)
+  // 1. Create a Room (Now ASYNC to fetch from DB)
+  socket.on("create_room", async ({ difficulty, matchType }) => {
     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
-    // Initialize the room state
+    // Fetch all problems from DB that match the chosen difficulty
+    const { data: problems, error } = await supabase
+        .from('problems')
+        .select('*')
+        .eq('difficulty', difficulty.toLowerCase());
+
+    if (error) {
+        console.error("Error fetching problems:", error.message);
+    }
+
+    // Pick a random problem from the list
+    const selectedProblem = (problems && problems.length > 0) 
+        ? problems[Math.floor(Math.random() * problems.length)] 
+        : null;
+    
+    // Store the selected problem in the room's memory
     activeRooms.set(roomId, {
-      players: [socket.id], // The creator is player 1
+      players: [socket.id],
+      readyPlayers: new Set(), 
       difficulty,
       matchType,
+      problem: selectedProblem, // <-- Saved here!
       status: "waiting"
     });
 
     socket.join(roomId);
-    
-    // Send the room code back to the creator
     socket.emit("room_created", { roomId });
-    console.log(`🏠 Room created: ${roomId} (Type: ${matchType})`);
+    console.log(`🏠 Room created: ${roomId} (Type: ${matchType}, Problem: ${selectedProblem?.title || 'Fallback'})`);
 
-    // The 1-Minute Expiration Timer
     setTimeout(() => {
       const room = activeRooms.get(roomId);
-      // If the room is still waiting for a second player after 60 seconds, kill it
       if (room && room.status === "waiting") {
         io.to(roomId).emit("room_expired", { message: "Room expired. No opponent joined." });
-        io.in(roomId).socketsLeave(roomId); // Kick everyone out of the socket room
-        activeRooms.delete(roomId); // Delete from memory
-        console.log(`⏰ Room expired: ${roomId}`);
+        io.in(roomId).socketsLeave(roomId);
+        activeRooms.delete(roomId);
       }
     }, 60 * 1000); 
   });
-// 2. Join a Room
+
+  // 2. Join a Room
   socket.on("join_room", ({ roomId }) => {
     const room = activeRooms.get(roomId);
 
-    if (!room) {
-      return socket.emit("room_error", { message: "Room not found or expired." });
-    }
+    if (!room) return socket.emit("room_error", { message: "Room not found or expired." });
+    if (room.status !== "waiting") return socket.emit("room_error", { message: "Match already in progress." });
 
-    if (room.status !== "waiting") {
-      return socket.emit("room_error", { message: "Match already in progress." });
-    }
-
-    // Add player 2, update status, and join socket room
     room.players.push(socket.id);
     room.status = "active";
     socket.join(roomId);
 
-    console.log(`⚔️ Match started in room: ${roomId}`);
+    console.log(`⚔️ Match started in room: ${roomId}. Sending problem: ${room.problem?.title}`);
     
-    // Broadcast to BOTH players that the race has begun
+    // BLAST THE PROBLEM TO BOTH PLAYERS SO THE UI CAN RENDER IT
     io.to(roomId).emit("match_started", { 
       roomId, 
       difficulty: room.difficulty,
-      matchType: room.matchType
+      matchType: room.matchType,
+      problem: room.problem // <-- Passes dynamic data to the frontend!
     });
   });
 
-  // 3. Sync Player Progress (Real-time progress bar updates)
+  // 3. The Synchronized Start Handshake
+  socket.on("player_ready", ({ roomId }) => {
+    const room = activeRooms.get(roomId);
+    if (room && room.status === "active") {
+      room.readyPlayers.add(socket.id);
+      
+      if (room.readyPlayers.size === 2) {
+        console.log(`🏁 Both players clicked ready in ${roomId}. Booting countdown!`);
+        io.to(roomId).emit("start_countdown", { seconds: 3 });
+      }
+    }
+  });
+
+  // 4. Sync Player Progress
   socket.on("progress_update", ({ roomId, progress }) => {
-    // socket.to() sends it to the opponent, but NOT back to the sender
     socket.to(roomId).emit("opponent_progress", { progress, playerId: socket.id });
   });
 
-  // 4. Match Won (End Game Logic)
-  // 4. Match Won (End Game Logic)
-  socket.on("player_won", async ({ roomId }) => {
+  // 5. Match Won (V2 ELO INTEGRATION)
+  socket.on("player_won", async ({ roomId, problemId, executionTimeMs }) => {
     const room = activeRooms.get(roomId);
     
     if (room && room.status === "active") {
       room.status = "finished";
       
-      // Tell both players the match is over and who won
+      // Instantly tell the frontend the match is over for snappiness
       io.to(roomId).emit("match_over", { winnerId: socket.id });
       
-      // Save the result to Supabase!
-      await saveMatchToDatabase(roomId, room.matchType, room.difficulty, socket.id);
+      try {
+        // Run the heavy V2 ELO calculations in the background
+        const result = await declareWinner(roomId, socket.id, problemId || 'two-sum', executionTimeMs || 0);
+        if (result.success) {
+           console.log(`🏆 Match finalized! ELO Exchanged: +${result.pointsExchanged}`);
+        }
+      } catch (dbError) {
+        console.error("Failed to process V2 ELO engine transaction:", dbError.message);
+      }
       
-      // Clean up the sockets and memory
       io.in(roomId).socketsLeave(roomId);
       activeRooms.delete(roomId);
-      console.log(`🏆 Match finished in room: ${roomId}. Winner: ${socket.id}`);
     }
   });
 
-  // Handle Disconnections
+  // 6. Safe Cleanup
   socket.on("disconnect", () => {
     console.log(`🔴 Socket disconnected: ${socket.id}`);
-    // We will add cleanup logic here later for when players drop mid-race
+    for (const [roomId, room] of activeRooms.entries()) {
+      if (room.players.includes(socket.id)) {
+        if (room.status === "active" && room.readyPlayers.has(socket.id)) {
+          room.readyPlayers.delete(socket.id);
+          socket.to(roomId).emit("opponent_left_handshake");
+        }
+      }
+    }
   });
 };

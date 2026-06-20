@@ -8,14 +8,25 @@ const Race = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get room info from the Lobby
   const roomId = location.state?.roomId || 'ERROR';
+  const difficulty = location.state?.difficulty || 'medium';
+  const matchType = location.state?.matchType || '1v1';
 
-  // Real-time Match State
+  // --- Handshake & Race State ---
+  const [hasClickedReady, setHasClickedReady] = useState(false);
+  const [countdown, setCountdown] = useState(null); 
+  const [raceStarted, setRaceStarted] = useState(false);
+
+  // --- Real-time Match State ---
   const [myProgress, setMyProgress] = useState(0);
   const [opponentProgress, setOpponentProgress] = useState(0);
 
-  // UI State
+  // --- Code Execution State ---
+  const [code, setCode] = useState("function twoSum(nums, target) {\n  // Write your code here\n}");
+  const [language, setLanguage] = useState('javascript');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- UI State ---
   const [leftTab, setLeftTab] = useState('problem'); 
   const [bottomTab, setBottomTab] = useState('tc'); 
   const [activeCase, setActiveCase] = useState(0);
@@ -31,47 +42,134 @@ const Race = () => {
   useEffect(() => {
     if (!socket) return;
     if (roomId === 'ERROR') {
-      navigate('/'); // Kick out if they refresh and lose state
+      navigate('/');
       return;
     }
 
-    // 1. Listen for the opponent passing test cases
+    // 1. Listen for the Countdown Signal once BOTH players click ready
+    socket.on('start_countdown', ({ seconds }) => {
+      setCountdown(seconds);
+      let count = seconds;
+      
+      const interval = setInterval(() => {
+        count -= 1;
+        if (count > 0) {
+          setCountdown(count);
+        } else if (count === 0) {
+          setCountdown('GO!');
+        } else {
+          clearInterval(interval);
+          setCountdown(null);
+          setRaceStarted(true); // Unlock the editor!
+        }
+      }, 1000);
+    });
+
+    // 2. Listen for progress updates & match over events
     socket.on('opponent_progress', ({ progress }) => {
       setOpponentProgress(progress);
     });
 
-    // 2. Listen for the match ending (someone won!)
     socket.on('match_over', ({ winnerId }) => {
       const didIWin = winnerId === socket.id;
-      // Send both players to the result screen with the final stats
       navigate('/result', { state: { didIWin, myProgress, opponentProgress } });
     });
 
+    // Handle case where opponent leaves during the handshake screen
+    socket.on('opponent_left_handshake', () => {
+      alert("Opponent left the match preparation screen.");
+      setHasClickedReady(false);
+      setCountdown(null);
+    });
+
     return () => {
+      socket.off('start_countdown');
       socket.off('opponent_progress');
       socket.off('match_over');
+      socket.off('opponent_left_handshake');
     };
   }, [socket, roomId, navigate, myProgress, opponentProgress]);
 
-  // Temporary function to test the multiplayer socket flow
-  const handleMockSubmit = () => {
+  // --- MANUAL CLICK HANDSHAKE LOGIC ---
+  const handleReadyClick = () => {
     if (!socket) return;
+    setHasClickedReady(true);
+    // Tell the backend that THIS specific user is locked and ready
+    socket.emit('player_ready', { roomId });
+  };
+
+  // --- REAL CODE SUBMISSION LOGIC ---
+  const handleSubmitCode = async () => {
+    if (!socket || !raceStarted || isSubmitting) return;
     
-    const newProgress = myProgress + 1;
-    if (newProgress <= 5) {
-      setMyProgress(newProgress);
-      // Tell the server (and opponent) we passed a test case
-      socket.emit('progress_update', { roomId, progress: newProgress });
+    setIsSubmitting(true);
+    setBottomTab('res'); 
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/code/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: language, 
+          code: code,
+          problemId: 'two-sum',
+          roomId: roomId,
+          userId: socket.id
+        })
+      });
+
+      const result = await response.json();
       
-      // If we hit 5/5, we win!
-      if (newProgress === 5) {
-        socket.emit('player_won', { roomId });
+      if (result.success && result.passedCount >= 0) {
+        if (result.passedCount > myProgress) {
+          setMyProgress(result.passedCount);
+          socket.emit('progress_update', { roomId, progress: result.passedCount });
+          
+          if (result.allPassed) {
+            socket.emit('player_won', { roomId });
+          }
+        }
+      } else {
+        console.log("Execution failed or errors occurred:", result.error || result.details);
       }
+    } catch (error) {
+      console.error("Execution error:", error);
+      alert("Failed to run code on server. Is the backend running?");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%', background: '#0a0a0a', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%', background: '#0a0a0a', overflow: 'hidden', position: 'relative' }}>
+      
+      {/* THE MUTUAL READINESS & COUNTDOWN OVERLAY */}
+      {!raceStarted && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(10, 10, 10, 0.94)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          {countdown !== null ? (
+             <div style={{ fontSize: countdown === 'GO!' ? '140px' : '180px', color: '#ff6b2b', fontWeight: '800', textShadow: '0 0 60px rgba(255, 107, 43, 0.5)', letterSpacing: '-2px' }}>
+               {countdown}
+             </div>
+          ) : (
+             <div style={{ textAlign: 'center', width: '340px' }}>
+                <h3 style={{ fontSize: '22px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>Arena Initialized</h3>
+                <p style={{ fontSize: '12px', color: '#555', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  {matchType} // Difficulty: {difficulty}
+                </p>
+                
+                {!hasClickedReady ? (
+                  <button className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: '14px' }} onClick={handleReadyClick}>
+                    Ready to Race ⚡
+                  </button>
+                ) : (
+                  <div style={{ padding: '14px', background: '#0f0f0f', border: '1px solid #ff6b2b33', borderRadius: '8px', color: '#ff6b2b', fontSize: '13px', fontWeight: '600', animation: 'pulse 1.5s infinite opacity' }}>
+                    Waiting for other player to start...
+                  </div>
+                )}
+             </div>
+          )}
+        </div>
+      )}
       
       {/* --- RACE NAV --- */}
       <div style={{ padding: '10px 24px', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', gap: '24px', background: '#0a0a0a', flexShrink: 0 }}>
@@ -98,10 +196,16 @@ const Race = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ fontSize: '16px', color: '#f44336', fontWeight: '700', fontVariantNumeric: 'tabular-nums', letterSpacing: '1px' }}>12:33</div>
-          <select style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: '6px', color: '#e8e8e8', fontSize: '12px', padding: '6px 12px', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}>
-            <option>javascript</option>
-            <option>python</option>
-            <option>cpp</option>
+          <select 
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: '6px', color: '#e8e8e8', fontSize: '12px', padding: '6px 12px', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }} 
+            disabled={!raceStarted}
+          >
+            <option value="javascript">javascript</option>
+            <option value="python">python</option>
+            <option value="cpp">cpp</option>
+            <option value="java">java</option>
           </select>
         </div>
       </div>
@@ -121,7 +225,7 @@ const Race = () => {
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                   <span style={{ fontSize: '16px', fontWeight: '600', color: '#fff' }}>Two Sum</span>
-                  <span className="pill easy">Easy</span>
+                  <span className={`pill ${difficulty.toLowerCase()}`}>{difficulty}</span>
                 </div>
                 <div style={{ fontSize: '13px', color: '#999', lineHeight: '1.8', marginBottom: '20px' }}>
                   Given array <span style={{ color: '#ff6b2b' }}>nums</span> and integer <span style={{ color: '#ff6b2b' }}>target</span>, return indices of two numbers that add up to target. Exactly one solution exists.
@@ -143,11 +247,6 @@ const Race = () => {
                     </div>
                   </div>
                 ))}
-                {activeHint !== null && (
-                  <div style={{ marginTop: '16px', background: '#0f0f0f', border: '1px solid #ff6b2b33', borderRadius: '8px', padding: '14px', fontSize: '13px', color: '#aaa', lineHeight: '1.8' }}>
-                    {hints[activeHint]}
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -161,9 +260,19 @@ const Race = () => {
               height="100%"
               width="100%"
               theme="vs-dark"
-              defaultLanguage="javascript"
-              defaultValue="function twoSum(nums, target) {&#10;  // Write your code here&#10;}"
-              options={{ minimap: { enabled: false }, fontSize: 16, fontFamily: 'JetBrains Mono', padding: { top: 20 }, scrollbar: { vertical: 'hidden', horizontal: 'hidden' }, overviewRulerBorder: false, hideCursorInOverviewRuler: true }}
+              language={language}
+              value={code}
+              onChange={(value) => setCode(value)}
+              options={{ 
+                minimap: { enabled: false }, 
+                fontSize: 16, 
+                fontFamily: 'JetBrains Mono', 
+                padding: { top: 20 }, 
+                scrollbar: { vertical: 'hidden', horizontal: 'hidden' }, 
+                overviewRulerBorder: false, 
+                hideCursorInOverviewRuler: true,
+                readOnly: !raceStarted 
+              }}
             />
           </div>
 
@@ -191,10 +300,17 @@ const Race = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '16px', marginTop: 'auto' }}>
-                    <button className="btn-sm" style={{ flex: 1, padding: '12px 0', fontSize: '13px' }} onClick={() => setBottomTab('res')}>Run Code</button>
-                    {/* WIRED UP THE MOCK SUBMIT HERE */}
-                    <button className="btn-sm orange" style={{ flex: 1, padding: '12px 0', fontSize: '13px' }} onClick={handleMockSubmit}>Submit ⚡</button>
+                    <button className="btn-sm" style={{ flex: 1, padding: '12px 0', fontSize: '13px', opacity: raceStarted ? 1 : 0.5 }} disabled={!raceStarted} onClick={() => setBottomTab('res')}>Run Code</button>
+                    <button className="btn-sm orange" style={{ flex: 1, padding: '12px 0', fontSize: '13px', opacity: raceStarted ? 1 : 0.5 }} disabled={!raceStarted || isSubmitting} onClick={handleSubmitCode}>
+                      {isSubmitting ? 'Running...' : 'Submit ⚡'}
+                    </button>
                   </div>
+                </div>
+              )}
+              {bottomTab === 'res' && (
+                <div>
+                  <div style={{ fontSize: '13px', color: myProgress === 5 ? '#4caf50' : '#ff9800', fontWeight: '600', marginBottom: '8px' }}>{myProgress} / 5 passed</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>Check backend logs or console for detailed execution outputs!</div>
                 </div>
               )}
             </div>
