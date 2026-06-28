@@ -8,7 +8,6 @@ const Race = () => {
   const { socket } = useSocket();
   const location = useLocation();
   const navigate = useNavigate();
-  const monaco = useMonaco();
   
   // --- Routing State ---
   const roomId = location.state?.roomId || 'ERROR';
@@ -24,9 +23,11 @@ const Race = () => {
   const [companiesList, setCompaniesList] = useState([]);
   const [snippetsCache, setSnippetsCache] = useState({});
 
-  const [hasClickedReady, setHasClickedReady] = useState(isPractice);
+  const [hasClickedReady, setHasClickedReady] = useState(false);
   const [countdown, setCountdown] = useState(null); 
-  const [raceStarted, setRaceStarted] = useState(isPractice);
+  
+  // FIX: Do not start the race/timer until the problem actually loads!
+  const [raceStarted, setRaceStarted] = useState(false); 
   const [timeLeft, setTimeLeft] = useState(timeLimitMinutes * 60);
 
   const [myProgress, setMyProgress] = useState(0);
@@ -53,32 +54,51 @@ const Race = () => {
   const [isDragging, setIsDragging] = useState(null); 
 
   // ==========================================
-  // 1. MONACO CUSTOM THEME
+  // 1. MONACO THEME INJECTION
   // ==========================================
-  useEffect(() => {
-    if (monaco) {
-      monaco.editor.defineTheme('codeRaceTheme', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [
-          { token: 'keyword', foreground: 'ff6b2b', fontStyle: 'bold' },
-          { token: 'type', foreground: '2cbb5d' },
-          { token: 'string', foreground: 'e5c07b' },
-          { token: 'comment', foreground: '5c6370', fontStyle: 'italic' },
-        ],
-        colors: {
-          'editor.background': '#0a0a0a',
-          'editor.lineHighlightBackground': '#161616',
-          'editorLineNumber.foreground': '#444444',
-          'editorIndentGuide.background': '#1e1e1e',
-        }
-      });
-    }
-  }, [monaco]);
+  const handleEditorWillMount = (monaco) => {
+    monaco.editor.defineTheme('codeRaceTheme', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'keyword', foreground: 'ff6b2b', fontStyle: 'bold' },
+        { token: 'type', foreground: '2cbb5d' },
+        { token: 'string', foreground: 'e5c07b' },
+        { token: 'comment', foreground: '5c6370', fontStyle: 'italic' },
+      ],
+      colors: {
+        'editor.background': '#0a0a0a',
+        'editor.lineHighlightBackground': '#161616',
+        'editorLineNumber.foreground': '#444444',
+        'editorIndentGuide.background': '#1e1e1e',
+      }
+    });
+  };
 
   // ==========================================
   // 2. SOCKET & TIMER LISTENERS
   // ==========================================
+  
+  // FIX: GUARANTEED AUTO-READY FOR PRACTICE MODE
+  useEffect(() => {
+    if (isPractice && socket && roomId !== 'ERROR' && !hasClickedReady) {
+      setHasClickedReady(true);
+      
+      // If we bypassed the lobby, the room doesn't exist on the server. Force create it.
+      socket.emit("create_room", { 
+        difficulty, 
+        company: initialCompany, 
+        matchType: 'practice', 
+        playerName: 'Solo Player' 
+      });
+      
+      // Give the server a tiny fraction of a second to build the room, then ready up.
+      setTimeout(() => {
+        socket.emit('toggle_ready', { roomId, isReady: true });
+      }, 300);
+    }
+  }, [isPractice, socket, roomId, hasClickedReady, difficulty, initialCompany]);
+
   useEffect(() => {
     if (!socket) return;
     if (roomId === 'ERROR' && !isPractice) { navigate('/'); return; }
@@ -96,11 +116,16 @@ const Race = () => {
       if (data.code_snippets) {
         const snippets = typeof data.code_snippets === 'string' ? JSON.parse(data.code_snippets) : data.code_snippets;
         setSnippetsCache(snippets);
-        const initialLang = snippets['cpp'] ? 'cpp' : 'java';
+        const initialLang = snippets['cpp'] ? 'cpp' : snippets['java'] ? 'java' : 'python';
         setLanguage(initialLang);
         
         const savedCode = localStorage.getItem(`coderace_${roomId}_${initialLang}`);
         setCode(savedCode || snippets[initialLang] || '// Write your code here');
+      }
+
+      // FIX: If it's practice mode, start the match immediately now that we have data
+      if (isPractice) {
+        setRaceStarted(true);
       }
     });
 
@@ -116,13 +141,20 @@ const Race = () => {
     });
 
     socket.on('opponent_progress', ({ progress }) => setOpponentProgress(progress));
+    
     socket.on('match_over', ({ winnerId }) => {
       navigate('/result', { state: { didIWin: winnerId === socket.id, myProgress, opponentProgress } });
     });
 
+    // FIX: Catch Backend Errors so it doesn't fail silently
+    socket.on('room_error', (data) => {
+      setBottomTab('result');
+      setTerminalLogs([`🚨 Server Error: ${data.message}`]);
+    });
+
     return () => {
       socket.off('problem_data'); socket.off('start_countdown');
-      socket.off('opponent_progress'); socket.off('match_over');
+      socket.off('opponent_progress'); socket.off('match_over'); socket.off('room_error');
     };
   }, [socket, roomId, isPractice, navigate, initialCompany, myProgress, opponentProgress]);
 
@@ -177,6 +209,7 @@ const Race = () => {
         language, code, problemId: problem?.id || 'two-sum', roomId, userId: socket.id
       });
 
+      console.log(data);
       if (data.success) {
         setTerminalLogs([`✅ Accepted`, `Execution Time: ${data.executionTimeMs}ms`, `Passed Cases: ${data.passedCount}/${data.totalCount}`]);
         setTotalCases(data.totalCount);
@@ -228,7 +261,7 @@ const Race = () => {
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // ==========================================
-  // 5. THEME & COLORS
+  // 5. THEME, COLORS & PARSERS
   // ==========================================
   const colors = {
     bgApp: '#000000', bgPanel: '#0a0a0a', bgHeader: '#121212',
@@ -251,12 +284,17 @@ const Race = () => {
     { id: 'python', label: 'Python' }
   ];
 
+  const cleanDescription = problem?.description
+    ?.replace(/Example \d+:/gi, '')
+    ?.replace(/Constraints:/gi, '')
+    ?.trim();
+
   return (
     <div style={{ boxSizing: 'border-box', display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: colors.bgApp, color: colors.textMain, fontFamily: "'JetBrains Mono', 'Segoe UI', sans-serif", overflow: 'hidden' }}>
       
       {isDragging && <div style={{ position: 'fixed', inset: 0, zIndex: 9999, cursor: isDragging === 'vertical' ? 'col-resize' : 'row-resize' }} />}
 
-      {/* HANDSHAKE OVERLAY */}
+      {/* HANDSHAKE OVERLAY - Hides instantly if in Practice Mode */}
       {!raceStarted && !isPractice && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           {countdown !== null ? (
@@ -266,7 +304,7 @@ const Race = () => {
                 <h3 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>Arena Ready</h3>
                 <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '30px', textTransform: 'uppercase', letterSpacing: '1px' }}>Waiting for both players...</p>
                 {!hasClickedReady ? (
-                  <button onClick={() => { setHasClickedReady(true); socket?.emit('player_ready', { roomId }); }} style={{ width: '100%', padding: '16px', background: colors.accent, color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}>Ready Up ⚡</button>
+                  <button onClick={() => { setHasClickedReady(true); socket?.emit('toggle_ready', { roomId, isReady: true }); }} style={{ width: '100%', padding: '16px', background: colors.accent, color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}>Ready Up ⚡</button>
                 ) : (
                   <div style={{ padding: '16px', color: colors.accent, fontWeight: '600', animation: 'pulse 1.5s infinite', border: `1px solid ${colors.accent}44`, borderRadius: '8px', background: '#ff6b2b11' }}>Waiting for opponent...</div>
                 )}
@@ -275,10 +313,9 @@ const Race = () => {
         </div>
       )}
       
-      {/* MATCH HUD - 3 Column Layout */}
+      {/* MATCH HUD */}
       <div style={{ boxSizing: 'border-box', height: '54px', borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', background: colors.bgApp, flexShrink: 0, zIndex: 50 }}>
         
-        {/* LEFT: PROGRESS */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '12px', color: colors.textMuted, fontWeight: '600' }}>You</span>
@@ -302,7 +339,6 @@ const Race = () => {
           )}
         </div>
 
-        {/* CENTER: PREMIUM ACTION BUTTONS */}
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
           {isSubmitting && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.accent, animation: 'pulse 1s infinite' }} />}
           
@@ -326,7 +362,6 @@ const Race = () => {
           </button>
         </div>
 
-        {/* RIGHT: TIMER & CONTROLS */}
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '24px' }}>
           <div style={{ 
             fontSize: '15px', fontWeight: '800', fontVariantNumeric: 'tabular-nums', letterSpacing: '1px',
@@ -352,7 +387,9 @@ const Race = () => {
           <div style={{ boxSizing: 'border-box', flex: 1, overflowY: 'auto', padding: '24px' }}>
             {!problem ? (<div style={{ color: colors.textMuted }}>Loading problem...</div>) : leftTab === 'description' ? (
               <>
-                <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '16px' }}>{problem.id ? `${problem.id}. ` : ''}{problem.title}</h1>
+                <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '16px' }}>
+                  {problem.leetcode_id ? `${problem.leetcode_id}. ` : ''}{problem.title}
+                </h1>
                 
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '24px' }}>
                   <span style={{ fontSize: '12px', padding: '4px 12px', background: diffStyles.bg, color: diffStyles.color, border: `1px solid ${diffStyles.border}`, borderRadius: '99px', fontWeight: '600', textTransform: 'capitalize' }}>
@@ -381,14 +418,35 @@ const Race = () => {
                   </div>
                 </div>
                 
-                <div style={{ fontSize: '14px', color: '#d4d4d4', lineHeight: '1.7', marginBottom: '32px', whiteSpace: 'pre-wrap', fontFamily: 'system-ui, sans-serif' }}>{problem.description}</div>
+                <div style={{ fontSize: '14px', color: '#d4d4d4', lineHeight: '1.7', marginBottom: '32px', whiteSpace: 'pre-wrap', fontFamily: 'system-ui, sans-serif' }}>
+                  {cleanDescription}
+                </div>
                 
-                {examples.length > 0 && <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '10px', textTransform: 'uppercase', letterSpacing:'1px' }}>Examples</div>}
-                {examples.map((ex, idx) => (
-                  <div key={idx} style={{ boxSizing: 'border-box', background: '#161616', borderLeft: `3px solid ${colors.border}`, padding: '16px', fontSize: '13px', marginBottom: '16px', color: '#e8e8e8', whiteSpace: 'pre-wrap', borderRadius: '4px' }}>
-                    {ex.example_text}
+                {examples.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                    {examples.map((ex, idx) => (
+                      <div key={idx}>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Example {idx + 1}:</div>
+                        <div style={{ boxSizing: 'border-box', background: '#161616', borderLeft: `3px solid ${colors.border}`, padding: '16px', fontSize: '13px', color: '#e8e8e8', whiteSpace: 'pre-wrap', borderRadius: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
+                          {ex.example_text}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {constraints && constraints.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '12px' }}>Constraints:</div>
+                    <ul style={{ paddingLeft: '20px', color: '#d4d4d4', fontSize: '13px', lineHeight: '1.8', fontFamily: "'JetBrains Mono', monospace" }}>
+                      {constraints.map((c, i) => (
+                        <li key={i} style={{ marginBottom: '4px' }}>
+                          <code style={{ background: '#161616', padding: '2px 6px', borderRadius: '4px', border: `1px solid ${colors.border}`, color: '#e8e8e8' }}>{c}</code>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </>
             ) : (
               <div style={{ color: colors.textMuted }}>Hints incur an ELO penalty. Use strategically.</div>
@@ -448,6 +506,7 @@ const Race = () => {
                 theme="codeRaceTheme"
                 language={language === 'python' ? 'python' : language}
                 value={code} onChange={handleCodeChange}
+                beforeMount={handleEditorWillMount}
                 options={{ minimap: { enabled: false }, fontSize: 14, fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontLigatures: true, scrollBeyondLastLine: false, readOnly: !raceStarted || timeLeft === 0 }}
               />
             </div>
