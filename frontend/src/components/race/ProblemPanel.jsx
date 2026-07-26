@@ -1,86 +1,144 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 const ProblemPanel = ({
   leftWidth,
   problem,
   difficulty,
-  companiesList,
-  examples,
-  constraints,
-  hints, // <-- Make sure this is destructured
-  colors
+  companiesList = [],
+  examples = [],
+  constraints = [],
+  hints = [],
+  colors,
 }) => {
-  // Local state moved out of Race.jsx
-  const [leftTab, setLeftTab] = useState('description');
+  const [leftTab, setLeftTab] = useState("description");
   const [isCompaniesOpen, setIsCompaniesOpen] = useState(false);
 
-  // Styling logic moved out of Race.jsx
-  const getDiffStyles = (diff) => {
-    if (diff === 'easy') return { color: colors.success, bg: '#2cbb5d15', border: '#2cbb5d40' };
-    if (diff === 'medium' || diff === 'med') return { color: colors.warning, bg: '#ffc10715', border: '#ffc10740' };
-    if (diff === 'hard') return { color: colors.fail, bg: '#ef474315', border: '#ef474340' };
-    return { color: colors.textMuted, bg: '#222', border: '#333' };
+  // Map theme states safely into simple classes
+  const getDiffClasses = (diff) => {
+    if (diff === "easy")
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/25";
+    if (diff === "medium" || diff === "med")
+      return "bg-amber-500/10 text-amber-400 border-amber-500/25";
+    if (diff === "hard")
+      return "bg-rose-500/10 text-rose-400 border-rose-500/25";
+    return "bg-neutral-800 text-neutral-400 border-neutral-700";
   };
-  const diffStyles = getDiffStyles(difficulty);
+  const diffClasses = getDiffClasses(difficulty);
 
   const cleanDescription = problem?.description
-    ?.replace(/Example \d+:/gi, '')
-    ?.replace(/Constraints:/gi, '')
+    ?.replace(/Example \d+:/gi, "")
+    ?.replace(/Constraints:/gi, "")
     ?.trim();
 
   return (
-    <div style={{ boxSizing: 'border-box', width: `${leftWidth}%`, background: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', background: colors.bgHeader, borderBottom: `1px solid ${colors.border}` }}>
-        <button onClick={() => setLeftTab('description')} style={{ padding: '10px 16px', background: leftTab === 'description' ? colors.bgPanel : 'transparent', border: 'none', color: leftTab === 'description' ? '#fff' : colors.textMuted, borderTop: leftTab === 'description' ? `2px solid ${colors.accent}` : '2px solid transparent', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>Description</button>
-        <button onClick={() => setLeftTab('hints')} style={{ padding: '10px 16px', background: leftTab === 'hints' ? colors.bgPanel : 'transparent', border: 'none', color: leftTab === 'hints' ? '#fff' : colors.textMuted, borderTop: leftTab === 'hints' ? `2px solid ${colors.accent}` : '2px solid transparent', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-          Hints {hints && hints.length > 0 ? `(${hints.length})` : ''}
+    <div
+      style={{
+        width: `${leftWidth}%`,
+        "--panel-bg": colors.bgPanel,
+        "--panel-border": colors.border,
+        "--panel-header": colors.bgHeader,
+        "--accent-color": colors.accent,
+        "--text-muted": colors.textMuted,
+      }}
+      className="box-border bg-[var(--panel-bg)] border border-[var(--panel-border)] flex flex-col overflow-hidden rounded-lg font-mono"
+    >
+      {/* HEADER TABS */}
+      <div className="flex bg-[var(--panel-header)] border-b border-[var(--panel-border)]">
+        <button
+          onClick={() => setLeftTab("description")}
+          style={{
+            borderTopColor:
+              leftTab === "description" ? "var(--accent-color)" : "transparent",
+          }}
+          className={`px-4 py-2.5 bg-transparent border-t-2 border-x-none border-b-none text-xs font-semibold cursor-pointer transition-colors
+            ${leftTab === "description" ? "bg-[var(--panel-bg)] text-white" : "text-[var(--text-muted)] hover:text-white"}
+          `}
+        >
+          Description
+        </button>
+        <button
+          onClick={() => setLeftTab("hints")}
+          style={{
+            borderTopColor:
+              leftTab === "hints" ? "var(--accent-color)" : "transparent",
+          }}
+          className={`px-4 py-2.5 bg-transparent border-t-2 border-x-none border-b-none text-xs font-semibold cursor-pointer transition-colors
+            ${leftTab === "hints" ? "bg-[var(--panel-bg)] text-white" : "text-[var(--text-muted)] hover:text-white"}
+          `}
+        >
+          Hints {hints.length > 0 ? `(${hints.length})` : ""}
         </button>
       </div>
-      
-      <div style={{ boxSizing: 'border-box', flex: 1, overflowY: 'auto', padding: '24px' }}>
-        {!problem ? (<div style={{ color: colors.textMuted }}>Loading problem...</div>) : leftTab === 'description' ? (
+
+      {/* MAIN CONTENT WORKSPACE */}
+      <div className="box-border flex-1 overflow-y-auto p-6 text-sm">
+        {!problem ? (
+          <div className="text-[var(--text-muted)]">Loading problem...</div>
+        ) : leftTab === "description" ? (
           <>
-            <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '16px' }}>
-              {problem.leetcode_id ? `${problem.leetcode_id}. ` : ''}{problem.title}
+            <h1 className="text-xl font-bold text-white mb-4">
+              {problem.leetcode_id ? `${problem.leetcode_id}. ` : ""}
+              {problem.title}
             </h1>
-            
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '24px' }}>
-              <span style={{ fontSize: '12px', padding: '4px 12px', background: diffStyles.bg, color: diffStyles.color, border: `1px solid ${diffStyles.border}`, borderRadius: '99px', fontWeight: '600', textTransform: 'capitalize' }}>
+
+            {/* TAGS BAR */}
+            <div className="flex gap-2 items-center mb-6">
+              <span
+                className={`text-xs px-3 py-1 border rounded-full font-semibold capitalize ${diffClasses}`}
+              >
                 {difficulty}
               </span>
-              
-              <div style={{ position: 'relative' }}>
-                <button 
+
+              {/* COMPANIES DROP-DOWN BUTTON */}
+              <div className="relative">
+                <button
                   onClick={() => setIsCompaniesOpen(!isCompaniesOpen)}
-                  style={{ fontSize: '12px', padding: '4px 12px', background: '#161616', border: `1px solid ${colors.border}`, color: '#ccc', borderRadius: '99px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
-                  onMouseOver={e => e.currentTarget.style.borderColor = colors.textMuted}
-                  onMouseOut={e => e.currentTarget.style.borderColor = colors.border}
+                  className="text-xs px-3 py-1 bg-[#161616] border border-[var(--panel-border)] text-neutral-300 rounded-full font-semibold cursor-pointer flex items-center gap-1.5 transition-colors hover:border-[var(--text-muted)]"
                 >
-                  🏢 Companies {companiesList.length > 0 ? `(${companiesList.length})` : ''}
+                  🏢 Companies{" "}
+                  {companiesList.length > 0 ? `(${companiesList.length})` : ""}
                 </button>
+
                 {isCompaniesOpen && (
-                  <div style={{ boxSizing: 'border-box', position: 'absolute', top: '100%', left: 0, marginTop: '8px', background: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(12px)', border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '16px', zIndex: 100, minWidth: '220px', boxShadow: '0 10px 40px rgba(0,0,0,0.9)' }}>
-                    <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>Asked By</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {companiesList.length > 0 ? companiesList.map((comp, i) => (
-                        <span key={i} style={{ background: '#2a2a2a', border: `1px solid ${colors.border}`, padding: '4px 10px', borderRadius: '4px', fontSize: '12px', color: '#fff' }}>{comp}</span>
-                      )) : <span style={{ color: '#888', fontSize: '12px' }}>General Algorithm</span>}
+                  <div className="box-border absolute top-full left-0 mt-2 bg-neutral-900/85 backdrop-blur-md border border-[var(--panel-border)] rounded-lg p-4 z-50 min-w-[220px] shadow-[0_10px_40px_rgba(0,0,0,0.9)]">
+                    <div className="text-[10px] text-[var(--text-muted)] mb-3 uppercase tracking-wider font-bold">
+                      Asked By
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {companiesList.length > 0 ? (
+                        companiesList.map((comp, i) => (
+                          <span
+                            key={i}
+                            className="bg-[#2a2a2a] border border-[var(--panel-border)] px-2.5 py-1 rounded text-xs text-white"
+                          >
+                            {comp}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-neutral-500 text-xs">
+                          General Algorithm
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
             </div>
-            
-            <div style={{ fontSize: '14px', color: '#d4d4d4', lineHeight: '1.7', marginBottom: '32px', whiteSpace: 'pre-wrap', fontFamily: 'system-ui, sans-serif' }}>
+
+            {/* PROBLEM BODY DESCRIPTIONS */}
+            <div className="text-neutral-300 leading-relaxed mb-8 white-space-pre-wrap font-sans">
               {cleanDescription}
             </div>
-            
+
+            {/* EXAMPLES CONTAINER */}
             {examples.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+              <div className="flex flex-col gap-4 mb-8">
                 {examples.map((ex, idx) => (
                   <div key={idx}>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Example {idx + 1}:</div>
-                    <div style={{ boxSizing: 'border-box', background: '#161616', borderLeft: `3px solid ${colors.border}`, padding: '16px', fontSize: '13px', color: '#e8e8e8', whiteSpace: 'pre-wrap', borderRadius: '4px', fontFamily: "'JetBrains Mono', monospace" }}>
+                    <div className="text-sm font-bold text-white mb-2">
+                      Example {idx + 1}:
+                    </div>
+                    <div className="box-border bg-[#161616] border-l-4 border-[var(--panel-border)] p-4 text-xs text-neutral-200 white-space-pre-wrap rounded-r font-mono">
                       {ex.example_text}
                     </div>
                   </div>
@@ -88,13 +146,18 @@ const ProblemPanel = ({
               </div>
             )}
 
-            {constraints && constraints.length > 0 && (
+            {/* CONSTRAINTS */}
+            {constraints.length > 0 && (
               <div>
-                <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '12px' }}>Constraints:</div>
-                <ul style={{ paddingLeft: '20px', color: '#d4d4d4', fontSize: '13px', lineHeight: '1.8', fontFamily: "'JetBrains Mono', monospace" }}>
+                <div className="text-sm font-bold text-white mb-3">
+                  Constraints:
+                </div>
+                <ul className="pl-5 text-neutral-300 text-xs leading-relaxed font-mono list-disc">
                   {constraints.map((c, i) => (
-                    <li key={i} style={{ marginBottom: '4px' }}>
-                      <code style={{ background: '#161616', padding: '2px 6px', borderRadius: '4px', border: `1px solid ${colors.border}`, color: '#e8e8e8' }}>{c}</code>
+                    <li key={i} className="mb-1">
+                      <code className="bg-[#161616] px-1.5 py-0.5 rounded border border-[var(--panel-border)] text-neutral-200">
+                        {c}
+                      </code>
                     </li>
                   ))}
                 </ul>
@@ -102,20 +165,27 @@ const ProblemPanel = ({
             )}
           </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ color: colors.warning, fontSize: '13px', marginBottom: '8px', padding: '12px', background: 'rgba(255, 193, 7, 0.1)', border: `1px solid rgba(255, 193, 7, 0.3)`, borderRadius: '6px' }}>
-              ⚠️ Using hints will not actually deduct ELO yet, but they will in the future! Use them strategically.
+          /* HINTS VIEW */
+          <div className="flex flex-col gap-3">
+            <div className="text-amber-400 text-xs mb-2 p-3 bg-amber-500/10 border border-amber-500/25 rounded-md">
+              ⚠️ Using hints will not actually deduct ELO yet, but they will in
+              the future! Use them strategically.
             </div>
-            
-            {hints && hints.length > 0 ? (
+
+            {hints.length > 0 ? (
               hints.map((hint, index) => (
-                <div key={index} style={{ background: '#161616', border: `1px solid ${colors.border}`, padding: '16px', borderRadius: '8px', fontSize: '14px', color: '#d4d4d4', lineHeight: '1.6' }}>
-                  <strong style={{ color: '#fff', display: 'block', marginBottom: '6px' }}>Hint {index + 1}</strong>
+                <div
+                  key={index}
+                  className="bg-[#161616] border border-[var(--panel-border)] p-4 rounded-lg text-neutral-300 leading-relaxed"
+                >
+                  <strong className="text-white block mb-1.5">
+                    Hint {index + 1}
+                  </strong>
                   {hint}
                 </div>
               ))
             ) : (
-              <div style={{ color: colors.textMuted, textAlign: 'center', marginTop: '40px' }}>
+              <div className="text-[var(--text-muted)] text-center mt-10">
                 No hints available for this problem. You're on your own!
               </div>
             )}
@@ -127,3 +197,4 @@ const ProblemPanel = ({
 };
 
 export default ProblemPanel;
+

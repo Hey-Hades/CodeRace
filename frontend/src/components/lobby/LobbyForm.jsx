@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const LobbyForm = ({
   isPracticeMode,
@@ -12,6 +12,7 @@ const LobbyForm = ({
   focusedInput,
   lobbyError,
   isRequestingRoom,
+  isNameLocked,
   primaryText,
   onModeChange,
   onPlayerNameChange,
@@ -21,141 +22,224 @@ const LobbyForm = ({
   onCustomTimeChange,
   onRoomCodeChange,
   onFocusChange,
-  onSubmit
+  onSubmit,
 }) => {
-  // --- Premium UI Helpers Restored ---
-  const getButtonStyle = (level, currentVal) => {
+  // --- Tailwind Class Helpers ---
+  const getButtonClasses = (level, currentVal) => {
     const isSelected = currentVal === level;
-    if (!isSelected) return { background: '#0a0a0a', border: '1px solid #1e1e1e', color: '#666' };
-    if (level === 'easy') return { background: '#0a1a0a', border: '1px solid #2d5a2d', color: '#4caf50' };
-    if (level === 'hard') return { background: '#1a0000', border: '1px solid #3a0a0a', color: '#f44336' };
-    return { background: '#1a0f0a', border: '1px solid #ff6b2b44', color: '#ff6b2b' }; 
+    const base =
+      "flex-1 p-3 text-xs font-semibold cursor-pointer rounded-lg transition-all font-inherit";
+
+    if (!isSelected) {
+      return `${base} bg-[#0a0a0a] border border-[#1e1e1e] text-[#666] hover:border-[#333] hover:text-[#999]`;
+    }
+    if (level === "easy") {
+      return `${base} bg-[#0a1a0a] border border-[#2d5a2d] text-[#4caf50]`;
+    }
+    if (level === "hard") {
+      return `${base} bg-[#1a0000] border border-[#3a0a0a] text-[#f44336]`;
+    }
+    return `${base} bg-[#1a0f0a] border border-[#ff6b2b44] text-[#ff6b2b]`;
   };
 
-  const inputStyle = (id) => ({
-    width: '100%',
-    background: '#0a0a0a',
-    border: `1px solid ${focusedInput === id ? '#ff6b2b' : '#1e1e1e'}`,
-    borderRadius: '8px',
-    color: '#fff',
-    fontSize: '13px',
-    padding: '12px 14px',
-    outline: 'none',
-    fontFamily: 'inherit',
-    transition: 'border-color 0.2s',
-    boxSizing: 'border-box'
-  });
+  const getInputClasses = (id) => {
+    const borderClass =
+      focusedInput === id ? "border-[#ff6b2b]" : "border-[#1e1e1e]";
+    return `w-full bg-[#0a0a0a] border ${borderClass} rounded-lg text-white text-[13px] px-3.5 py-3 outline-none font-inherit transition-colors box-border placeholder:text-[#444] focus:border-[#ff6b2b]`;
+  };
 
   return (
     <>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '11px', color: '#555', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>
-          {isPracticeMode ? 'Solo Training' : 'Multiplayer Arena'}
+      {/* Header Section */}
+      <div className="mb-6">
+        <div className="text-[11px] text-[#555] tracking-[1px] uppercase mb-2 font-semibold">
+          {isPracticeMode ? "Solo Training" : "Multiplayer Arena"}
         </div>
-        <div style={{ fontSize: '28px', fontWeight: '800', color: '#fff', lineHeight: '1.2', marginBottom: '6px', letterSpacing: '-0.5px' }}>
-          {isPracticeMode ? 'Hone your skills.' : multiplayerMode === 'create' ? 'Set up your match.' : 'Join the arena.'}
+        <div className="text-[28px] font-extrabold text-white leading-[1.2] mb-1.5 tracking-[-0.5px]">
+          {isPracticeMode
+            ? "Hone your skills."
+            : multiplayerMode === "create"
+              ? "Set up your match."
+              : "Join the arena."}
         </div>
-        <div style={{ fontSize: '12px', color: '#777', lineHeight: '1.6' }}>
-          {isPracticeMode 
-            ? 'Select a difficulty and target company to begin your offline practice session.' 
-            : multiplayerMode === 'create' 
-              ? 'Configure the match settings to generate a secure room code for your opponent.' 
-              : 'Enter the room code provided by your opponent to join their match.'}
+        <div className="text-xs text-[#777] leading-[1.6]">
+          {isPracticeMode
+            ? "Select a difficulty and target company to begin your offline practice session."
+            : multiplayerMode === "create"
+              ? "Configure the match settings to generate a secure room code for your opponent."
+              : "Enter the room code provided by your opponent to join their match."}
         </div>
       </div>
 
+      {/* Mode Toggle (Create/Join) */}
       {!isPracticeMode && (
-        <div style={{ display: 'flex', background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '8px', padding: '4px', marginBottom: '16px' }}>
-          <button onClick={() => { onModeChange('create'); onFocusChange(null); }} style={{ flex: 1, padding: '10px', fontSize: '12px', fontWeight: '600', border: 'none', borderRadius: '6px', background: multiplayerMode === 'create' ? '#1a0f0a' : 'transparent', color: multiplayerMode === 'create' ? '#ff6b2b' : '#666', cursor: 'pointer', transition: 'all 0.2s' }}>Create Room</button>
-          <button onClick={() => { onModeChange('join'); onFocusChange(null); }} style={{ flex: 1, padding: '10px', fontSize: '12px', fontWeight: '600', border: 'none', borderRadius: '6px', background: multiplayerMode === 'join' ? '#1a0f0a' : 'transparent', color: multiplayerMode === 'join' ? '#ff6b2b' : '#666', cursor: 'pointer', transition: 'all 0.2s' }}>Join Room</button>
+        <div className="flex bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg p-1 mb-4">
+          <button
+            onClick={() => {
+              onModeChange("create");
+              onFocusChange(null);
+            }}
+            className={`flex-1 p-2.5 text-xs font-semibold border-none rounded-md cursor-pointer transition-all ${
+              multiplayerMode === "create"
+                ? "bg-[#1a0f0a] text-[#ff6b2b]"
+                : "bg-transparent text-[#666] hover:text-[#999]"
+            }`}
+          >
+            Create Room
+          </button>
+          <button
+            onClick={() => {
+              onModeChange("join");
+              onFocusChange(null);
+            }}
+            className={`flex-1 p-2.5 text-xs font-semibold border-none rounded-md cursor-pointer transition-all ${
+              multiplayerMode === "join"
+                ? "bg-[#1a0f0a] text-[#ff6b2b]"
+                : "bg-transparent text-[#666] hover:text-[#999]"
+            }`}
+          >
+            Join Room
+          </button>
         </div>
       )}
 
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>Your Name</div>
-        <input 
-          placeholder="Hey-Hades" 
-          style={inputStyle('name')}
-          value={playerName}
-          onChange={(e) => onPlayerNameChange(e.target.value)}
-          onFocus={() => onFocusChange('name')}
-          onBlur={() => onFocusChange(null)}
-          disabled={isRequestingRoom}
-        />
-      </div>
+      {/* Player Name Input */}
+      {!isNameLocked && (
+        <div className="mb-4">
+          <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
+            Your Name
+          </label>
+          <input
+            placeholder="Hey-Hades"
+            className={getInputClasses("name")}
+            value={playerName}
+            onChange={(e) => onPlayerNameChange(e.target.value)}
+            onFocus={() => onFocusChange("name")}
+            onBlur={() => onFocusChange(null)}
+            disabled={isRequestingRoom || isNameLocked}
+          />
+        </div>
+      )}
 
-      {(isPracticeMode || multiplayerMode === 'create') && (
+      {/* Settings (Practice & Create Room Only) */}
+      {(isPracticeMode || multiplayerMode === "create") && (
         <>
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>Difficulty</div>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button disabled={isRequestingRoom} onClick={() => onDifficultyChange('easy')} style={{ flex: 1, padding: '12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', borderRadius: '8px', transition: 'all 0.2s', ...getButtonStyle('easy', difficulty) }}>Easy</button>
-              <button disabled={isRequestingRoom} onClick={() => onDifficultyChange('med')} style={{ flex: 1, padding: '12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', borderRadius: '8px', transition: 'all 0.2s', ...getButtonStyle('med', difficulty) }}>Medium</button>
-              <button disabled={isRequestingRoom} onClick={() => onDifficultyChange('hard')} style={{ flex: 1, padding: '12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', borderRadius: '8px', transition: 'all 0.2s', ...getButtonStyle('hard', difficulty) }}>Hard</button>
+          <div className="mb-4">
+            <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
+              Difficulty
+            </label>
+            <div className="flex gap-1.5">
+              <button
+                disabled={isRequestingRoom}
+                onClick={() => onDifficultyChange("easy")}
+                className={getButtonClasses("easy", difficulty)}
+              >
+                Easy
+              </button>
+              <button
+                disabled={isRequestingRoom}
+                onClick={() => onDifficultyChange("med")}
+                className={getButtonClasses("med", difficulty)}
+              >
+                Medium
+              </button>
+              <button
+                disabled={isRequestingRoom}
+                onClick={() => onDifficultyChange("hard")}
+                className={getButtonClasses("hard", difficulty)}
+              >
+                Hard
+              </button>
             </div>
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>Time Control</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              
-              {/* 2x2 Symmetrical Grid for presets */}
-              {['Bullet (5 min)', 'Blitz (15 min)', 'Rapid (30 min)', 'Zen (No Limit)'].map((time) => (
-                <button 
-                  key={time} 
+          <div className="mb-4">
+            <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
+              Time Control
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Presets */}
+              {[
+                "Bullet (5 min)",
+                "Blitz (15 min)",
+                "Rapid (30 min)",
+                "Zen (No Limit)",
+              ].map((time) => (
+                <button
+                  key={time}
                   disabled={isRequestingRoom}
-                  onClick={() => onMatchTypeChange(time)} 
-                  style={{ 
-                    padding: '12px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', 
-                    fontFamily: 'inherit', borderRadius: '8px', transition: 'all 0.2s', 
-                    ...getButtonStyle(time, matchType) 
-                  }}
+                  onClick={() => onMatchTypeChange(time)}
+                  className={getButtonClasses(time, matchType)}
                 >
-                  {time === 'Zen (No Limit)' ? 'Zen (∞)' : time}
+                  {time === "Zen (No Limit)" ? "Zen (∞)" : time}
                 </button>
               ))}
-              
-              {/* Full-width Custom Input */}
-              <div 
-                onClick={() => !isRequestingRoom && onMatchTypeChange('Custom')}
-                style={{ 
-                  gridColumn: 'span 2', display: 'flex', alignItems: 'center', 
-                  justifyContent: 'center', padding: '0 12px', cursor: 'text', 
-                  borderRadius: '8px', transition: 'all 0.2s', height: '40px',
-                  ...getButtonStyle('Custom', matchType) 
-                }}
+
+              {/* Premium Slider for Custom Time */}
+              <div
+                onClick={() => !isRequestingRoom && onMatchTypeChange("Custom")}
+                className={`col-span-2 flex flex-col justify-center px-4 py-3 h-[60px] rounded-lg cursor-pointer transition-all ${
+                  matchType === "Custom"
+                    ? "bg-[#1a0f0a] border border-[#ff6b2b44]"
+                    : "bg-[#0a0a0a] border border-[#1e1e1e] hover:border-[#333]"
+                }`}
               >
-                <input 
-                  type="text"
-                  placeholder="Custom Time (minutes)"
-                  value={customTime}
+                <div className="flex justify-between items-center mb-2.5">
+                  <span
+                    className={`text-xs font-semibold transition-colors ${
+                      matchType === "Custom" ? "text-[#ff6b2b]" : "text-[#666]"
+                    }`}
+                  >
+                    Custom Minutes
+                  </span>
+                  <span
+                    className={`text-xs font-bold transition-colors ${
+                      matchType === "Custom" ? "text-white" : "text-[#555]"
+                    }`}
+                  >
+                    {customTime || 10}{" "}
+                    <span className="text-[10px] font-normal text-[#666]">
+                      min
+                    </span>
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="1"
+                  max="180"
+                  value={customTime || 10}
                   disabled={isRequestingRoom}
                   onChange={(e) => {
-                    onCustomTimeChange(e.target.value.replace(/\D/g, ''));
-                    onMatchTypeChange('Custom');
+                    onCustomTimeChange(e.target.value);
+                    onMatchTypeChange("Custom");
                   }}
-                  onFocus={() => { onMatchTypeChange('Custom'); onFocusChange('time'); }}
-                  onBlur={() => onFocusChange(null)}
-                  style={{ 
-                    background: 'transparent', border: 'none', 
-                    color: matchType === 'Custom' ? '#ff6b2b' : '#666', 
-                    fontSize: '12px', fontWeight: '600', outline: 'none', 
-                    width: '100%', textAlign: 'center', fontFamily: 'inherit' 
-                  }}
+                  className={`w-full h-1 bg-[#1e1e1e] rounded-lg appearance-none cursor-pointer outline-none transition-all
+                    ${matchType === "Custom" ? "[&::-webkit-slider-thumb]:bg-[#ff6b2b]" : "[&::-webkit-slider-thumb]:bg-[#444]"}
+                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 
+                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:transition-all
+                    hover:[&::-webkit-slider-thumb]:scale-125 active:[&::-webkit-slider-thumb]:scale-90
+                    ${matchType === "Custom" ? "hover:[&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,107,43,0.6)]" : ""}
+                    
+                    ${matchType === "Custom" ? "[&::-moz-range-thumb]:bg-[#ff6b2b]" : "[&::-moz-range-thumb]:bg-[#444]"}
+                    [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:border-none 
+                    [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:transition-all
+                    hover:[&::-moz-range-thumb]:scale-125 active:[&::-moz-range-thumb]:scale-90`}
                 />
               </div>
-
             </div>
           </div>
-              
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>Target Company</div>
-            <select 
+
+          <div className="mb-5">
+            <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
+              Target Company
+            </label>
+            <select
               value={company}
               disabled={isRequestingRoom}
               onChange={(e) => onCompanyChange(e.target.value)}
-              style={{ ...inputStyle('company'), cursor: 'pointer' }}
-              onFocus={() => onFocusChange('company')}
+              className={`${getInputClasses("company")} cursor-pointer appearance-none`}
+              onFocus={() => onFocusChange("company")}
               onBlur={() => onFocusChange(null)}
             >
               <option value="All">All Companies (Random)</option>
@@ -168,31 +252,41 @@ const LobbyForm = ({
         </>
       )}
 
-      {(!isPracticeMode && multiplayerMode === 'join') && (
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', fontWeight: '600' }}>Room Code</div>
-          <input 
-            placeholder="RACE17" 
-            style={{ ...inputStyle('code'), textTransform: 'uppercase', letterSpacing: '2px' }} 
+      {/* Join Room Code Input */}
+      {!isPracticeMode && multiplayerMode === "join" && (
+        <div className="mb-5">
+          <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
+            Room Code
+          </label>
+          <input
+            placeholder="RACE17"
+            className={`${getInputClasses("code")} uppercase tracking-[2px]`}
             value={roomCodeInput}
             disabled={isRequestingRoom}
             onChange={(e) => onRoomCodeChange(e.target.value)}
-            onFocus={() => onFocusChange('code')}
+            onFocus={() => onFocusChange("code")}
             onBlur={() => onFocusChange(null)}
           />
         </div>
       )}
 
-      {lobbyError && <div style={{ color: '#ef4743', fontSize: '13px', marginBottom: '16px', textAlign: 'center', fontWeight: '600' }}>{lobbyError}</div>}
+      {/* Error Display */}
+      {lobbyError && (
+        <div className="text-[#ef4743] text-[13px] mb-4 text-center font-semibold">
+          {lobbyError}
+        </div>
+      )}
 
-      <button 
+      {/* Submit Button */}
+      <button
         disabled={isRequestingRoom}
-        style={{ background: '#ff6b2b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: '700', padding: '14px 0', width: '100%', cursor: isRequestingRoom ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s, background 0.2s', boxShadow: '0 4px 14px rgba(255, 107, 43, 0.2)', opacity: isRequestingRoom ? 0.7 : 1 }} 
-        onMouseEnter={(e) => !isRequestingRoom && (e.currentTarget.style.background = '#ff824d')}
-        onMouseLeave={(e) => !isRequestingRoom && (e.currentTarget.style.background = '#ff6b2b')}
-        onMouseDown={(e) => !isRequestingRoom && (e.currentTarget.style.transform = 'scale(0.98)')}
-        onMouseUp={(e) => !isRequestingRoom && (e.currentTarget.style.transform = 'scale(1)')}
         onClick={onSubmit}
+        className={`w-full py-3.5 rounded-lg text-white text-sm font-bold shadow-[0_4px_14px_rgba(255,107,43,0.2)] transition-all
+          ${
+            isRequestingRoom
+              ? "bg-[#ff6b2b] opacity-70 cursor-not-allowed"
+              : "bg-[#ff6b2b] hover:bg-[#ff824d] active:scale-95"
+          }`}
       >
         {primaryText}
       </button>

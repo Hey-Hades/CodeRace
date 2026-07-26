@@ -1,100 +1,147 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
 
-/* 1. Kill the browser's default margins and hide window scrollbars */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background: #0a0a0a;
-  color: #e8e8e8;
-  font-family: 'JetBrains Mono', monospace;
+/* ========================================================
+   1. The Tailwind v4 Theme Configuration
+   This allows you to use things like 'bg-brand' or 'text-dark' anywhere in JSX!
+   ======================================================== */
+@theme {
+  --color-brand: #ff6b2b;
+  --color-brand-dim: #1a0f0a;
+  --color-dark: #0a0a0a;
+  --color-panel: #0f0f0f;
+  --color-border-dark: #1e1e1e;
+  --color-text-muted: #555555;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-inherit: inherit;
 }
 
-* {
-  box-sizing: border-box;
+/* ========================================================
+   2. Base Resets & Global Behavior
+   ======================================================== */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--color-dark);
+    color: #e8e8e8;
+    font-family: var(--font-mono);
+  }
+
+  * {
+    box-sizing: border-box;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  /* Hide scrollbars everywhere but keep wheel functionality */
+  ::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
-/* 2. Hide internal panel scrollbars but keep mouse-wheel scrolling functional */
-::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-* {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
+/* ========================================================
+   3. Custom Design Tokens & Layout Utilities
+   ======================================================== */
+
+/* Main application window wrapper */
+@utility r {
+  @apply w-screen h-screen flex flex-col bg-dark text-[#e8e8e8];
 }
 
-/* The main app wrapper */
-.r {
-  background: #0a0a0a;
-  color: #e8e8e8;
-  width: 100vw; 
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* Navbar utilities */
+@utility nav {
+  @apply flex items-center justify-between px-6 py-3.5 border-b border-border-dark;
+}
+@utility logo {
+  @apply text-base font-bold tracking-tight text-white;
+}
+@utility nav-links {
+  @apply flex gap-1;
+}
+@utility nl {
+  @apply bg-transparent border-none text-text-muted text-xs px-3 py-1.5 cursor-pointer rounded-md transition-all duration-150 font-inherit;
+
+  &:hover {
+    @apply text-[#e8e8e8] bg-[#161616];
+  }
+  &.active {
+    @apply text-brand bg-brand-dim;
+  }
 }
 
-/* Nav Styles */
-.nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid #1e1e1e; }
-.logo { font-size: 16px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
-.logo span { color: #ff6b2b; }
-.nav-links { display: flex; gap: 4px; }
-.nl { background: none; border: none; color: #555; font-size: 12px; padding: 6px 12px; cursor: pointer; font-family: inherit; border-radius: 6px; transition: all 0.15s; }
-.nl:hover { color: #e8e8e8; background: #161616; }
-.nl.active { color: #ff6b2b; background: #1a0f0a; }
+/* Custom badges / difficulty pills */
+@utility pill {
+  @apply inline-flex items-center gap-1.25 text-[10px] px-2.5 py-0.75 rounded-full border border-border-dark text-text-muted font-medium;
 
-/* Reusable UI Elements */
-.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; padding: 3px 10px; border-radius: 99px; border: 1px solid #1e1e1e; color: #555; font-weight: 500; }
-.pill.easy { border-color: #1a3a1a; color: #4caf50; background: #0a1a0a; }
-.pill.med { border-color: #3a2a0a; color: #ff9800; background: #1a1000; }
-.pill.hard { border-color: #3a0a0a; color: #f44336; background: #1a0000; }
-.mono-input { background: #0f0f0f; border: 1px solid #1e1e1e; border-radius: 8px; color: #e8e8e8; font-size: 13px; padding: 12px 16px; width: 100%; outline: none; font-family: inherit; transition: border 0.15s; }
-.mono-input:focus { border-color: #ff6b2b44; }
-.btn-primary { background: #ff6b2b; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; padding: 12px 0; width: 100%; cursor: pointer; font-family: inherit; letter-spacing: 0.3px; }
-.btn-ghost { background: #0f0f0f; border: 1px solid #1e1e1e; border-radius: 8px; color: #e8e8e8; font-size: 13px; padding: 12px 0; width: 100%; cursor: pointer; font-family: inherit; }
-.btn-sm { background: #0f0f0f; border: 1px solid #1e1e1e; border-radius: 6px; color: #e8e8e8; font-size: 11px; padding: 6px 14px; cursor: pointer; font-family: inherit; }
-.btn-sm.orange { background: #ff6b2b; border: none; color: #fff; font-weight: 600; }
-.btn-sm.green { background: #1a3a1a; border: 1px solid #2d5a2d; color: #4caf50; font-weight: 600; }
-.divider { height: 1px; background: #1e1e1e; margin: 16px 0; }
-.section-label { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-
-/* --- NEW TAB STYLES --- */
-.tabs {
-  display: flex;
-  background: #0f0f0f;
-  border-bottom: 1px solid #242424;
+  &.easy {
+    @apply border-[#1a3a1a] text-[#4caf50] bg-[#0a1a0a];
+  }
+  &.med {
+    @apply border-[#3a2a0a] text-[#ff9800] bg-[#1a1000];
+  }
+  &.hard {
+    @apply border-[#3a0a0a] text-[#f44336] bg-[#1a0000];
+  }
 }
 
-.tab {
-  position: relative;
-  padding: 14px 22px;
-  border: none;
-  background: transparent;
-  color: #6d6d6d;
-  font-size: 14px;
-  font-family: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.2s ease;
+/* Inputs & Forms */
+@utility mono-input {
+  @apply w-full bg-panel border border-border-dark rounded-lg text-[#e8e8e8] text-xs px-4 py-3 outline-none font-inherit transition-colors duration-150;
+
+  &:focus {
+    @apply border-brand/30;
+  }
 }
 
-.tab:hover {
-  color: #cfcfcf;
+/* Button Component Shorthands */
+@utility btn-primary {
+  @apply w-full bg-brand border-none rounded-lg text-white text-xs font-semibold py-3 cursor-pointer font-inherit tracking-wide;
+}
+@utility btn-ghost {
+  @apply w-full bg-panel border border-border-dark rounded-lg text-[#e8e8e8] text-xs py-3 cursor-pointer font-inherit;
+}
+@utility btn-sm {
+  @apply bg-panel border border-border-dark rounded-md text-[11px] px-3.5 py-1.5 cursor-pointer font-inherit text-[#e8e8e8];
+
+  &.orange {
+    @apply bg-brand border-none text-white font-semibold;
+  }
+  &.green {
+    @apply bg-[#1a3a1a] border border-[#2d5a2d] text-[#4caf50] font-semibold;
+  }
 }
 
-.tab.active {
-  color: #ff6b2b; /* Kept aligned with your primary neon orange */
+/* Miscellanous Elements */
+@utility divider {
+  @apply h-px bg-border-dark my-4;
+}
+@utility section-label {
+  @apply text-[10px] text-[#444] uppercase tracking-widest mb-2.5;
 }
 
-.tab.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 100%;
-  height: 2px;
-  background: #ff6b2b;
+/* Match Screen / Navigation Tabs */
+@utility tabs {
+  @apply flex bg-panel border-b border-[#242424];
+}
+@utility tab {
+  @apply relative px-5 py-3.5 border-none bg-transparent text-[#6d6d6d] text-sm font-medium font-inherit cursor-pointer transition-colors duration-200;
+
+  &:hover {
+    @apply text-[#cfcfcf];
+  }
+  &.active {
+    @apply text-brand;
+
+    &::after {
+      content: "";
+      @apply absolute left-0 bottom-[-1px] w-full h-0.5 bg-brand;
+    }
+  }
 }

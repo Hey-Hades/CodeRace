@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const ReadyOverlay = ({
   raceStarted,
@@ -8,48 +8,70 @@ const ReadyOverlay = ({
   setHasClickedReady,
   socket,
   roomId,
-  colors
+  colors,
 }) => {
-  // If the race has officially started, hide the overlay completely.
-  // We leave this check exactly as you had it.
   if (raceStarted || isPractice) return null;
 
+  const isGo = countdown <= 0;
+  const activeColor = isGo ? colors.success : colors.accent;
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-[10px] z-[1000] flex justify-center items-center">
       {countdown !== null ? (
-         <div style={{ 
-             // Dynamically shrink the text a bit for the word "GO!"
-             fontSize: countdown <= 0 ? '140px' : '180px', 
-             // Turn green when it hits GO!
-             color: countdown <= 0 ? colors.success : colors.accent, 
-             fontWeight: '900', 
-             // Make the neon glow match the color
-             textShadow: `0 0 60px ${countdown <= 0 ? colors.success : colors.accent}66` 
-         }}>
-             {/* THE FIX: Hide 4s, print 3 2 1, and swap 0 for GO! */}
-             {countdown > 0 ? (countdown > 3 ? 3 : countdown) : "GO!"}
-         </div>
+        <div
+          style={{
+            "--glow-color": activeColor,
+            textShadow: `0 0 60px var(--glow-color)`,
+          }}
+          className={`
+            font-black transition-all duration-300 drop-shadow-2xl
+            ${isGo ? "text-[140px]" : "text-[180px]"}
+          `}
+          // We can apply color dynamically via standard inline styles to avoid color parsing lag
+          style={{
+            color: activeColor,
+            textShadow: `0 0 60px ${activeColor}66`,
+          }}
+        >
+          {countdown > 0 ? (countdown > 3 ? 3 : countdown) : "GO!"}
+        </div>
       ) : (
-         <div style={{ boxSizing: 'border-box', textAlign: 'center', width: '380px', background: colors.bgPanel, border: `1px solid ${colors.border}`, padding: '40px', borderRadius: '12px', boxShadow: '0 20px 50px rgba(0,0,0,0.8)' }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>Arena Ready</h3>
-            <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '30px', textTransform: 'uppercase', letterSpacing: '1px' }}>Waiting for both players...</p>
-            {!hasClickedReady ? (
-              <button 
-                onClick={() => { 
-                  setHasClickedReady(true); 
-                  socket?.emit('toggle_ready', { roomId, isReady: true }); 
-                }} 
-                style={{ width: '100%', padding: '16px', background: colors.accent, color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}
-              >
-                Ready Up ⚡
-              </button>
-            ) : (
-              <div style={{ padding: '16px', color: colors.accent, fontWeight: '600', animation: 'pulse 1.5s infinite', border: `1px solid ${colors.accent}44`, borderRadius: '8px', background: '#ff6b2b11' }}>Waiting for opponent...</div>
-            )}
-         </div>
+        <div
+          style={{
+            "--panel-bg": colors.bgPanel,
+            "--panel-border": colors.border,
+            "--accent-color": colors.accent,
+            "--text-muted": colors.textMuted,
+          }}
+          className="box-border text-center w-[380px] bg-[var(--panel-bg)] border border-[var(--panel-border)] p-10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+        >
+          <h3 className="text-2xl font-extrabold mb-2 text-white">
+            Arena Ready
+          </h3>
+          <p className="text-[13px] text-[var(--text-muted)] mb-[30px] uppercase tracking-wider">
+            Waiting for both players...
+          </p>
+
+          {!hasClickedReady ? (
+            <button
+              onClick={() => {
+                setHasClickedReady(true);
+                socket?.emit("toggle_ready", { roomId, isReady: true });
+              }}
+              className="w-full p-4 bg-[var(--accent-color)] text-white border-none rounded-lg cursor-pointer font-bold text-base hover:brightness-110 active:scale-[0.98] transition-all"
+            >
+              Ready Up ⚡
+            </button>
+          ) : (
+            <div className="p-4 text-[var(--accent-color)] font-semibold animate-pulse border border-[var(--accent-color)]/25 rounded-lg bg-[var(--accent-color)]/10">
+              Waiting for opponent...
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
 };
 
 export default ReadyOverlay;
+

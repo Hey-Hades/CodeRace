@@ -1,24 +1,20 @@
-import React from 'react';
+import React from "react";
 
 const SplitHandle = ({ direction, onMouseDown, colors }) => {
-  const isVertical = direction === 'vertical';
-  
+  const isVertical = direction === "vertical";
+
   return (
-    <div 
+    <div
       onMouseDown={onMouseDown}
-      style={{ 
-        width: isVertical ? '4px' : '100%', 
-        height: isVertical ? '100%' : '4px',
-        cursor: isVertical ? 'col-resize' : 'row-resize', 
-        background: 'transparent', 
-        transition: 'background 0.2s', 
-        borderRadius: '4px', 
-        zIndex: 10 
-      }}
-      onMouseOver={e => e.currentTarget.style.background = colors.borderHover}
-      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+      style={{ "--hover-bg": colors.borderHover }}
+      className={`
+        bg-transparent transition-colors duration-200 rounded-sm z-10
+        hover:bg-[var(--hover-bg)]
+        ${isVertical ? "w-1 h-full cursor-col-resize" : "w-full h-1 cursor-row-resize"}
+      `}
     />
   );
 };
 
 export default SplitHandle;
+

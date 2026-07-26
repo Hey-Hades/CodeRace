@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import Editor from '@monaco-editor/react';
+import { useState } from "react";
+import Editor from "@monaco-editor/react";
 
 const EditorPanel = ({
   bottomHeight,
@@ -12,53 +12,96 @@ const EditorPanel = ({
   code,
   handleCodeChange,
   handleEditorWillMount,
-  colors
+  handleEditorDidMount,
+  colors,
 }) => {
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const selectedLangLabel =
+    availableLanguages.find((l) => l.id === language)?.label || "C++";
+  const isEditorReadOnly = !raceStarted || timeLeft === 0;
 
   return (
-    <div style={{ boxSizing: 'border-box', height: `calc(${100 - bottomHeight}% - 3px)`, background: colors.bgPanel, borderRadius: '8px', border: `1px solid ${colors.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: colors.bgHeader, borderBottom: `1px solid ${colors.border}` }}>
-        <div style={{ position: 'relative' }}>
-          <button 
+    <div
+      style={{
+        height: `calc(${100 - bottomHeight}% - 3px)`,
+        "--panel-bg": colors.bgPanel,
+        "--panel-border": colors.border,
+        "--panel-header": colors.bgHeader,
+        "--text-muted": colors.textMuted,
+      }}
+      className="box-border bg-[var(--panel-bg)] border border-[var(--panel-border)] flex flex-col overflow-hidden rounded-lg font-mono"
+    >
+      {/* EDITOR CONTROL HEADER TOOLBAR */}
+      <div className="box-border flex items-center justify-between px-3 py-1.5 bg-[var(--panel-header)] border-b border-[var(--panel-border)]">
+        {/* LANGUAGE SELECT DROPDOWN */}
+        <div className="relative">
+          <button
             onClick={() => setIsLangOpen(!isLangOpen)}
             disabled={!raceStarted}
-            style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '13px', padding: '6px 12px', borderRadius: '4px', cursor: raceStarted ? 'pointer' : 'not-allowed', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', transition: 'background 0.2s' }}
-            onMouseOver={e => e.currentTarget.style.background = '#222'}
-            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+            className={`bg-transparent border-none text-white text-xs px-3 py-1.5 rounded font-semibold flex items-center gap-2 transition-colors
+              ${raceStarted ? "cursor-pointer hover:bg-neutral-800" : "cursor-not-allowed opacity-50"}
+            `}
           >
-            {availableLanguages.find(l => l.id === language)?.label || 'C++'} <span style={{ fontSize: '9px', color: '#666' }}>▼</span>
+            {selectedLangLabel}{" "}
+            <span className="text-[9px] text-neutral-500">▼</span>
           </button>
+
           {isLangOpen && raceStarted && (
-            <div style={{ boxSizing: 'border-box', position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: '#1e1e1e', border: `1px solid ${colors.border}`, borderRadius: '6px', overflow: 'hidden', zIndex: 100, minWidth: '120px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-              {availableLanguages.map(lang => (
-                <div 
-                  key={lang.id} 
-                  onClick={() => { handleLanguageSelect(lang.id); setIsLangOpen(false); }}
-                  style={{ padding: '10px 16px', fontSize: '13px', color: '#e8e8e8', cursor: 'pointer', background: language === lang.id ? '#2a2a2a' : 'transparent', fontWeight: language === lang.id ? '700' : '500' }}
-                  onMouseOver={e => e.currentTarget.style.background = '#333'}
-                  onMouseOut={e => e.currentTarget.style.background = language === lang.id ? '#2a2a2a' : 'transparent'}
-                >
-                  {lang.label}
-                </div>
-              ))}
+            <div className="box-border absolute top-full left-0 mt-1 bg-neutral-900 border border-[var(--panel-border)] rounded-md overflow-hidden z-50 min-w-[120px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+              {availableLanguages.map((lang) => {
+                const isSelected = language === lang.id;
+                return (
+                  <div
+                    key={lang.id}
+                    onClick={() => {
+                      handleLanguageSelect(lang.id);
+                      setIsLangOpen(false);
+                    }}
+                    className={`px-4 py-2.5 text-xs text-neutral-200 cursor-pointer transition-colors hover:bg-neutral-700
+                      ${isSelected ? "bg-neutral-800 font-bold" : "bg-transparent font-medium"}
+                    `}
+                  >
+                    {lang.label}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        <button onClick={handleResetCode} title="Reset to original snippet" disabled={!raceStarted} style={{ background: 'transparent', border: 'none', color: colors.textMuted, cursor: raceStarted ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: '6px', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color='#fff'} onMouseOut={e => e.currentTarget.style.color=colors.textMuted}>
-          <span style={{ fontSize: '16px' }}>↺</span> <span style={{ fontSize: '12px', fontWeight: '600' }}>Reset</span>
+        {/* CODE SNIPPET RESET BUTTON */}
+        <button
+          onClick={handleResetCode}
+          title="Reset to original snippet"
+          disabled={!raceStarted}
+          className={`bg-transparent border-none text-[var(--text-muted)] flex items-center gap-1.5 transition-colors hover:text-white
+            ${raceStarted ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+          `}
+        >
+          <span className="text-base">↺</span>
+          <span className="text-xs font-semibold">Reset</span>
         </button>
       </div>
-      
-      <div style={{ boxSizing: 'border-box', flex: 1, padding: '8px 0' }}>
+
+      {/* MONACO WORKSPACE MOUNT ENVIRONMENT */}
+      <div className="box-border flex-1 py-2">
         <Editor
-          height="100%" width="100%" 
+          height="100%"
+          width="100%"
           theme="codeRaceTheme"
-          language={language === 'python' ? 'python' : language}
-          value={code} onChange={handleCodeChange}
+          language={language === "python" ? "python" : language}
+          value={code}
+          onChange={handleCodeChange}
           beforeMount={handleEditorWillMount}
-          options={{ minimap: { enabled: false }, fontSize: 14, fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontLigatures: true, scrollBeyondLastLine: false, readOnly: !raceStarted || timeLeft === 0 }}
+          handleEditorDidMount={handleEditorDidMount}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontLigatures: true,
+            scrollBeyondLastLine: false,
+            readOnly: isEditorReadOnly,
+          }}
         />
       </div>
     </div>
