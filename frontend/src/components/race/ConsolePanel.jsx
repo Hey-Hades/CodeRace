@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const ConsolePanel = ({ bottomHeight, examples, terminalLogs, colors }) => {
+const ConsolePanel = ({ bottomHeight, isMobile = false, examples, terminalLogs, colors }) => {
   const [bottomTab, setBottomTab] = useState("testcases");
   const [activeCase, setActiveCase] = useState(0);
 
@@ -13,7 +13,7 @@ const ConsolePanel = ({ bottomHeight, examples, terminalLogs, colors }) => {
   return (
     <div
       style={{
-        height: `calc(${bottomHeight}% - 3px)`,
+        height: isMobile ? "100%" : `calc(${bottomHeight}% - 3px)`,
         "--panel-bg": colors.bgPanel,
         "--panel-border": colors.border,
         "--panel-header": colors.bgHeader,

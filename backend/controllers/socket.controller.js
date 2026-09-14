@@ -1,6 +1,26 @@
 import { declareWinner } from "./match.controller.js";
 import supabase from "../config/supabase.js";
 
+// ─── Validation constants ─────────────────────────────────────────────────────
+const VALID_DIFFICULTIES = ["easy", "med", "hard"];
+const VALID_MATCH_TYPES  = [
+  "practice",
+  "Bullet (5 min)",
+  "Blitz (15 min)",
+  "Rapid (30 min)",
+  "Zen (No Limit)",
+];
+const MAX_NAME_LEN   = 32;
+const MAX_ROOM_CODE  = 10;
+
+/** Strip HTML tags and truncate a string to maxLen */
+const sanitizeString = (str, maxLen = 64) =>
+  typeof str === "string"
+    ? str.replace(/<[^>]*>/g, "").trim().slice(0, maxLen)
+    : "";
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const activeRooms = new Map();
 
 export const handleSocketConnection = (io, socket) => {
@@ -9,6 +29,21 @@ export const handleSocketConnection = (io, socket) => {
   socket.on(
     "create_room",
     async ({ difficulty, company, matchType, playerName, userId }) => {
+      // ── Validate inputs ────────────────────────────────────────────────────
+      const cleanName = sanitizeString(playerName, MAX_NAME_LEN);
+      if (!cleanName) return socket.emit("room_error", { message: "Player name is required." });
+
+      if (!VALID_DIFFICULTIES.includes(difficulty)) {
+        return socket.emit("room_error", { message: "Invalid difficulty setting." });
+      }
+
+      // Allow standard types and custom "Custom (N min)" formats
+      const isValidMatchType = VALID_MATCH_TYPES.includes(matchType) || /^Custom \(\d{1,3} min\)$/.test(matchType);
+      if (!isValidMatchType) {
+        return socket.emit("room_error", { message: "Invalid match type." });
+      }
+      // ──────────────────────────────────────────────────────────────────────
+
       const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
       try {
@@ -100,7 +135,17 @@ export const handleSocketConnection = (io, socket) => {
   );
 
   socket.on("join_room", async ({ roomId, playerName, userId }) => {
-    const roomCode = roomId;
+    // ── Validate inputs ──────────────────────────────────────────────────────
+    const cleanName = sanitizeString(playerName, MAX_NAME_LEN);
+    if (!cleanName) return socket.emit("room_error", { message: "Player name is required." });
+
+    const cleanRoomId = sanitizeString(roomId, MAX_ROOM_CODE).toUpperCase();
+    if (!cleanRoomId || !/^[A-Z0-9]+$/.test(cleanRoomId)) {
+      return socket.emit("room_error", { message: "Invalid room code format." });
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    const roomCode = cleanRoomId;
     const room = activeRooms.get(roomCode);
 
     if (!room)
@@ -310,7 +355,9 @@ export const handleSocketConnection = (io, socket) => {
   });
 
   socket.on("progress_update", ({ roomId, progress }) => {
-    socket.to(roomId).emit("opponent_progress", { progress });
+    // Clamp to 0–100 to prevent a client from sending fake progress numbers
+    const safeProgress = Math.min(Math.max(Number(progress) || 0, 0), 100);
+    socket.to(roomId).emit("opponent_progress", { progress: safeProgress });
   });
 
   socket.on("player_won", async ({ roomId, executionTimeMs }) => {

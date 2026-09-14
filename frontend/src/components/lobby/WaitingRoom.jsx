@@ -16,51 +16,67 @@ const WaitingRoom = ({
   onCancel,
 }) => {
   return (
-    <div style={{ background: '#080808', border: '1px solid #1e1e1e', borderRadius: '16px', padding: '32px 24px', position: 'relative', overflow: 'hidden' }}>
-      
-      {/* Restored Blurred Glow */}
-      <div style={{ position: 'absolute', top: '-50px', left: '50%', transform: 'translateX(-50%)', width: '160px', height: '80px', background: '#ff6b2b', filter: 'blur(60px)', opacity: 0.15, pointerEvents: 'none' }}></div>
+    <div className="relative bg-[#080808] border border-[#1e1e1e] rounded-2xl px-4 sm:px-6 py-8 overflow-hidden">
 
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
-        <div style={{ fontSize: '10px', color: '#ff6b2b', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>Arena Ready</div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#fff', letterSpacing: '3px', fontFamily: 'monospace' }}>{roomId}</div>
-          <button 
+      {/* Glow */}
+      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-40 h-20 bg-[#ff6b2b] blur-[60px] opacity-15 pointer-events-none" />
+
+      {/* Room code + copy */}
+      <div className="text-center mb-6 relative z-10">
+        <div className="text-[10px] text-[#ff6b2b] tracking-[2px] uppercase mb-2 font-bold">Arena Ready</div>
+        <div className="flex items-center justify-center gap-2.5 flex-wrap">
+          <div className="text-2xl sm:text-[28px] font-extrabold text-white tracking-[3px] font-mono break-all">
+            {roomId}
+          </div>
+          <button
             onClick={onCopy}
-            style={{ fontSize: '10px', fontWeight: 'bold', padding: '6px 10px', background: copied ? '#4caf5022' : '#111', border: `1px solid ${copied ? '#4caf50' : '#333'}`, borderRadius: '6px', color: copied ? '#4caf50' : '#888', cursor: 'pointer', transition: 'all 0.2s ease', fontFamily: 'inherit' }}
+            className={`text-[10px] font-bold px-2.5 py-1.5 rounded-md cursor-pointer transition-all border font-inherit ${
+              copied
+                ? 'bg-[#4caf5022] border-[#4caf50] text-[#4caf50]'
+                : 'bg-[#111] border-[#333] text-[#888] hover:border-[#555]'
+            }`}
           >
             {copied ? '✓ COPIED' : 'COPY'}
           </button>
         </div>
-        <div style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
+        <div className="text-xs text-[#666] mt-2.5">
           {matchLabel} • {difficulty.toUpperCase()}
         </div>
       </div>
 
-      <div style={{ borderBottom: '1px solid #1e1e1e', margin: '0 -24px 20px -24px' }}></div>
+      <div className="border-b border-[#1e1e1e] mx-0 mb-5" />
 
-      {lobbyError && <div style={{ color: '#ef4743', fontSize: '13px', marginBottom: '16px', textAlign: 'center', fontWeight: '600' }}>{lobbyError}</div>}
+      {lobbyError && (
+        <div className="text-[#ef4743] text-sm mb-4 text-center font-semibold">{lobbyError}</div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '12px', alignItems: 'center', marginBottom: '24px' }}>
+      {/* Player cards — side-by-side on all sizes, shrink gracefully */}
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 items-center mb-6">
         <PlayerCard name={playerName || 'You'} ready={amIReady} isEmpty={false} isOpponent={false} />
-        
-        <div style={{ fontSize: '12px', color: '#444', fontWeight: '800', textAlign: 'center' }}>VS</div>
-        
+        <div className="text-xs text-[#444] font-black text-center">VS</div>
         <PlayerCard name={opponentName || 'waiting...'} ready={isOpponentReady} isEmpty={!opponentName} isOpponent={true} />
       </div>
 
       {opponentName && (
-        <button 
-          style={{ background: amIReady ? '#1e1e1e' : '#ff6b2b', border: 'none', borderRadius: '8px', color: amIReady ? '#aaa' : '#fff', fontSize: '13px', fontWeight: '700', padding: '14px 0', width: '100%', cursor: 'pointer', fontFamily: 'inherit', marginBottom: '16px', transition: 'all 0.2s', boxShadow: amIReady ? 'none' : '0 4px 14px rgba(255, 107, 43, 0.2)' }} 
+        <button
           onClick={onToggleReady}
+          className={`w-full py-3.5 rounded-lg text-sm font-bold cursor-pointer transition-all mb-4 font-inherit border-none ${
+            amIReady
+              ? 'bg-[#1e1e1e] text-[#aaa]'
+              : 'bg-[#ff6b2b] text-white shadow-[0_4px_14px_rgba(255,107,43,0.2)] hover:bg-[#ff824d] active:scale-95'
+          }`}
         >
           {amIReady ? 'Cancel Ready Status' : 'Lock In & Ready Up ⚡'}
         </button>
       )}
 
-      <div style={{ textAlign: 'center' }}>
-        <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#666', fontSize: '11px', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = '#666'}>← Leave arena</button>
+      <div className="text-center">
+        <button
+          onClick={onCancel}
+          className="bg-none border-none text-[#666] text-xs cursor-pointer hover:text-white transition-colors"
+        >
+          ← Leave arena
+        </button>
       </div>
     </div>
   );

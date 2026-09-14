@@ -4,84 +4,55 @@ const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '2rem' }}>
-      <div style={{ width: '400px' }}>
-        
+    <div className="flex items-center justify-center min-h-[calc(100vh-60px)] px-4 py-8">
+      <div className="w-full max-w-[400px]">
+
         {/* Header Section */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ fontSize: '11px', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '10px' }}>
+        <div className="mb-8">
+          <div className="text-[11px] text-[#444] tracking-[1px] uppercase mb-2.5">
             CodeRace
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginBottom: '6px' }}>
-            Race your friends.<br />Code faster. <span style={{ color: '#ff6b2b' }}>Win.</span>
+          <div className="text-2xl sm:text-[28px] font-bold text-white leading-[1.2] mb-1.5">
+            Race your friends.<br />Code faster. <span className="text-[#ff6b2b]">Win.</span>
           </div>
-          <div style={{ fontSize: '12px', color: '#555', marginTop: '10px', lineHeight: '1.8' }}>
+          <div className="text-[12px] text-[#555] mt-2.5 leading-[1.8]">
             Choose your mode. Hone your skills solo or challenge an opponent in a multiplayer coding race.
           </div>
         </div>
 
-        <div className="divider" style={{ borderBottom: '1px solid #1e1e1e', marginBottom: '20px' }}></div>
+        <div className="border-b border-[#1e1e1e] mb-5" />
 
-        {/* --- GAME MODES PANEL --- */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          
-          <button 
+        {/* Game Modes */}
+        <div className="flex flex-col gap-3">
+
+          <button
             onClick={() => navigate('/practice-lobby')}
-            style={{ 
-              width: '100%', 
-              padding: '16px', 
-              background: '#0a0a0a', 
-              border: '1px solid #1e1e1e', 
-              borderRadius: '8px', 
-              cursor: 'pointer', 
-              textAlign: 'left', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ff6b2b44'; e.currentTarget.style.background = '#111'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.background = '#0a0a0a'; }}
+            className="w-full p-4 bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg cursor-pointer text-left flex justify-between items-center transition-all hover:border-[#ff6b2b44] hover:bg-[#111] active:scale-[0.98]"
           >
             <div>
-              <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>Practice Mode</div>
-              <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>Train solo against the clock</div>
+              <div className="text-sm font-semibold text-white">Practice Mode</div>
+              <div className="text-[11px] text-[#666] mt-1">Train solo against the clock</div>
             </div>
-            <span style={{ color: '#ff6b2b', fontWeight: 'bold' }}>→</span>
+            <span className="text-[#ff6b2b] font-bold text-lg">→</span>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate('/lobby')}
-            style={{ 
-              width: '100%', 
-              padding: '16px', 
-              background: '#0a0a0a', 
-              border: '1px solid #1e1e1e', 
-              borderRadius: '8px', 
-              cursor: 'pointer', 
-              textAlign: 'left', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ff6b2b44'; e.currentTarget.style.background = '#111'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1e1e1e'; e.currentTarget.style.background = '#0a0a0a'; }}
+            className="w-full p-4 bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg cursor-pointer text-left flex justify-between items-center transition-all hover:border-[#ff6b2b44] hover:bg-[#111] active:scale-[0.98]"
           >
             <div>
-              <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>Create / Join Race Room</div>
-              <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>Host or join a 1v1 multiplayer race</div>
+              <div className="text-sm font-semibold text-white">Create / Join Race Room</div>
+              <div className="text-[11px] text-[#666] mt-1">Host or join a 1v1 multiplayer race</div>
             </div>
-            <span style={{ color: '#ff6b2b', fontWeight: 'bold' }}>→</span>
+            <span className="text-[#ff6b2b] font-bold text-lg">→</span>
           </button>
 
         </div>
 
-        {/* --- FOOTER LINKS --- */}
-        <div style={{ marginTop: '20px', display: 'flex', gap: '20px' }}>
-          <button 
-            className="btn-ghost" 
-            style={{ fontSize: '11px', color: '#666', padding: 0, height: 'auto', background: 'transparent', border: 'none', cursor: 'pointer' }} 
+        {/* Footer Links */}
+        <div className="mt-5 flex gap-5">
+          <button
+            className="text-[11px] text-[#666] hover:text-white bg-transparent border-none cursor-pointer p-0 transition-colors"
             onClick={() => navigate('/leaderboard')}
           >
             View Rankings 🏆

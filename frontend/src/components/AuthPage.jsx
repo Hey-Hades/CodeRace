@@ -52,14 +52,14 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-8">
-      <div className="w-[400px]">
+    <div className="flex items-center justify-center min-h-[calc(100vh-60px)] px-4 py-8">
+      <div className="w-full max-w-[400px]">
         {/* Header Section */}
         <div className="mb-8">
           <div className="text-[11px] text-[#444] tracking-[1px] uppercase mb-2.5">
             CodeRace
           </div>
-          <div className="text-[28px] font-bold text-white leading-[1.2] mb-1.5">
+          <div className="text-2xl sm:text-[28px] font-bold text-white leading-[1.2] mb-1.5">
             {isLogin ? (
               <>
                 Welcome back.

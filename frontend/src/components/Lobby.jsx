@@ -267,16 +267,9 @@ const Lobby = () => {
 
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100%",
-        minHeight: "calc(100vh - 70px)",
-        padding: "2rem",
-      }}
+      className="flex items-center justify-center w-full min-h-[calc(100vh-60px)] px-4 py-8"
     >
-      <div style={{ width: "400px" }}>
+      <div className="w-full max-w-[440px]">
         {!isWaiting ? (
           <LobbyForm
             isPracticeMode={isPracticeMode}

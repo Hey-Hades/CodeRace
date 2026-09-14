@@ -55,7 +55,7 @@ const LobbyForm = ({
         <div className="text-[11px] text-[#555] tracking-[1px] uppercase mb-2 font-semibold">
           {isPracticeMode ? "Solo Training" : "Multiplayer Arena"}
         </div>
-        <div className="text-[28px] font-extrabold text-white leading-[1.2] mb-1.5 tracking-[-0.5px]">
+        <div className="text-2xl sm:text-[28px] font-extrabold text-white leading-[1.2] mb-1.5 tracking-[-0.5px]">
           {isPracticeMode
             ? "Hone your skills."
             : multiplayerMode === "create"

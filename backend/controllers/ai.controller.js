@@ -11,9 +11,21 @@ export const getCodeReview = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: "No code provided for review." });
   }
 
+  // ── Input Validation ──────────────────────────────────────────────────────
+  const MAX_CODE_BYTES = 30 * 1024; // 30 KB — more than enough for a contest solution
+  if (Buffer.byteLength(code, "utf8") > MAX_CODE_BYTES) {
+    return res.status(400).json({ error: "Code is too large to review." });
+  }
+
+  // Sanitise problemTitle to prevent prompt injection — strip to 100 chars of plain text
+  const safeTitle = typeof problemTitle === "string"
+    ? problemTitle.replace(/[^a-zA-Z0-9 _\-().]/g, "").slice(0, 100)
+    : "a coding challenge";
+  // ──────────────────────────────────────────────────────────────────────────
+
   // 👉 2. Dynamic context-aware prompt
   const prompt = `
-    You are an expert technical interviewer. The candidate was working on the coding problem "${problemTitle}".
+    You are an expert technical interviewer. The candidate was working on the coding problem "${safeTitle}".
     Match outcome: ${didIWin ? "The candidate won and successfully solved the problem." : "The candidate lost the match (the opponent finished first), so their code might be incomplete or just the default starting template."}
     
     Here is their code at the end of the match:

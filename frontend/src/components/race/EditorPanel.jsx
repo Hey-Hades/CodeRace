@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 
 const EditorPanel = ({
   bottomHeight,
+  isMobile = false,
   raceStarted,
   timeLeft,
   language,
@@ -23,7 +24,7 @@ const EditorPanel = ({
   return (
     <div
       style={{
-        height: `calc(${100 - bottomHeight}% - 3px)`,
+        height: isMobile ? "100%" : `calc(${100 - bottomHeight}% - 3px)`,
         "--panel-bg": colors.bgPanel,
         "--panel-border": colors.border,
         "--panel-header": colors.bgHeader,
@@ -96,7 +97,7 @@ const EditorPanel = ({
           handleEditorDidMount={handleEditorDidMount}
           options={{
             minimap: { enabled: false },
-            fontSize: 14,
+            fontSize: isMobile ? 12 : 14,
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             fontLigatures: true,
             scrollBeyondLastLine: false,

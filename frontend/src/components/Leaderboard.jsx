@@ -9,11 +9,9 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        // Fetch the top 50 players from your new backend route!
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const response = await fetch(`${backendUrl}/api/users/leaderboard`);
         if (!response.ok) throw new Error("Failed to fetch leaderboard");
-
         const data = await response.json();
         setPlayers(data);
       } catch (error) {
@@ -22,194 +20,93 @@ const Leaderboard = () => {
         setIsLoading(false);
       }
     };
-
     fetchLeaderboard();
   }, []);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        minHeight: "calc(100vh - 80px)",
-        padding: "3rem 1rem",
-      }}
-    >
+    <div className="flex flex-col items-center min-h-[calc(100vh-60px)] px-4 py-8 sm:py-12">
+
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-        <h1
-          style={{
-            fontSize: "32px",
-            fontWeight: "800",
-            color: "#fff",
-            marginBottom: "8px",
-          }}
-        >
-          Global <span style={{ color: "#ff6b2b" }}>Rankings</span>
+      <div className="text-center mb-8 sm:mb-10">
+        <h1 className="text-2xl sm:text-[32px] font-extrabold text-white mb-2">
+          Global <span className="text-[#ff6b2b]">Rankings</span>
         </h1>
-        <p style={{ fontSize: "14px", color: "#888" }}>
-          The top competitive programmers in the arena.
-        </p>
+        <p className="text-sm text-[#888]">The top competitive programmers in the arena.</p>
       </div>
 
-      {/* Leaderboard Table Container */}
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "800px",
-          background: "#0a0a0a",
-          border: "1px solid #1e1e1e",
-          borderRadius: "12px",
-          overflow: "hidden",
-        }}
-      >
-        {/* Table Headers */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "80px 2fr 1fr 1fr 1fr",
-            padding: "16px 24px",
-            background: "#0f0f0f",
-            borderBottom: "1px solid #1e1e1e",
-            fontSize: "11px",
-            color: "#555",
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-            fontWeight: "600",
-          }}
-        >
+      {/* Table Container */}
+      <div className="w-full max-w-[800px] bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden">
+
+        {/* Table Header — columns hidden progressively on small screens */}
+        <div className="grid grid-cols-[56px_1fr_80px] sm:grid-cols-[72px_1fr_90px_90px] lg:grid-cols-[80px_2fr_1fr_1fr_1fr] px-4 sm:px-6 py-4 bg-[#0f0f0f] border-b border-[#1e1e1e] text-[11px] text-[#555] uppercase tracking-[1px] font-semibold">
           <div>Rank</div>
           <div>CodeName</div>
-          <div style={{ textAlign: "center" }}>Rating</div>
-          <div style={{ textAlign: "center" }}>Win Rate</div>
-          <div style={{ textAlign: "right" }}>Matches</div>
+          <div className="text-center">Rating</div>
+          <div className="hidden sm:block text-center">Win Rate</div>
+          <div className="hidden lg:block text-right">Matches</div>
         </div>
 
-        {/* Loading State */}
+        {/* Loading */}
         {isLoading && (
-          <div
-            style={{
-              padding: "40px",
-              textAlign: "center",
-              color: "#666",
-              fontSize: "14px",
-              animation: "pulse 1.5s infinite opacity",
-            }}
-          >
+          <div className="px-6 py-10 text-center text-[#666] text-sm animate-pulse">
             Fetching live rankings...
           </div>
         )}
 
-        {/* Players List */}
+        {/* Empty */}
         {!isLoading && players.length === 0 && (
-          <div
-            style={{
-              padding: "40px",
-              textAlign: "center",
-              color: "#666",
-              fontSize: "14px",
-            }}
-          >
+          <div className="px-6 py-10 text-center text-[#666] text-sm">
             No players ranked yet. Be the first!
           </div>
         )}
 
-        {/* Render Players */}
+        {/* Player rows */}
         {!isLoading &&
           players.map((player, index) => {
-            // Calculate win rate (avoid division by zero)
             const winRate =
               player.matches_played > 0
                 ? Math.round((player.wins / player.matches_played) * 100)
                 : 0;
-
-            // Special styling for Top 3
-            const isFirst = index === 0;
+            const isFirst  = index === 0;
             const isSecond = index === 1;
-            const isThird = index === 2;
+            const isThird  = index === 2;
+
+            const rankColor = isFirst
+              ? "#ffd700"
+              : isSecond
+                ? "#c0c0c0"
+                : isThird
+                  ? "#cd7f32"
+                  : "#444";
 
             return (
               <div
                 key={player.username}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "80px 2fr 1fr 1fr 1fr",
-                  padding: "20px 24px",
-                  borderBottom: "1px solid #111",
-                  alignItems: "center",
-                  transition: "background 0.2s",
-                  cursor: "pointer",
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.background = "#111")}
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
+                className="grid grid-cols-[56px_1fr_80px] sm:grid-cols-[72px_1fr_90px_90px] lg:grid-cols-[80px_2fr_1fr_1fr_1fr] px-4 sm:px-6 py-4 border-b border-[#111] items-center transition-colors hover:bg-[#111] cursor-pointer"
               >
                 {/* Rank */}
-                <div
-                  style={{
-                    fontSize: "18px",
-                    fontWeight: "800",
-                    color: isFirst
-                      ? "#ffd700"
-                      : isSecond
-                        ? "#c0c0c0"
-                        : isThird
-                          ? "#cd7f32"
-                          : "#444",
-                  }}
-                >
+                <div className="text-base sm:text-lg font-extrabold" style={{ color: rankColor }}>
                   #{index + 1}
                 </div>
 
                 {/* Username */}
-                <div
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: "600",
-                    color: "#e8e8e8",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  {player.username}
-                  {isFirst && <span style={{ fontSize: "14px" }}>👑</span>}
+                <div className="text-sm sm:text-[15px] font-semibold text-[#e8e8e8] flex items-center gap-2 truncate">
+                  <span className="truncate">{player.username}</span>
+                  {isFirst && <span className="text-sm shrink-0">👑</span>}
                 </div>
 
-                {/* ELO Rating */}
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color: "#ff6b2b",
-                  }}
-                >
+                {/* ELO */}
+                <div className="text-center text-sm sm:text-[15px] font-bold text-[#ff6b2b]">
                   {player.rating}
                 </div>
 
-                {/* Win Rate */}
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontSize: "14px",
-                    color: "#888",
-                  }}
-                >
+                {/* Win Rate — hidden on mobile */}
+                <div className="hidden sm:block text-center text-sm text-[#888]">
                   {winRate}%
                 </div>
 
-                {/* Total Matches */}
-                <div
-                  style={{
-                    textAlign: "right",
-                    fontSize: "14px",
-                    color: "#666",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
+                {/* Matches — hidden on < lg */}
+                <div className="hidden lg:block text-right text-sm text-[#666] tabular-nums">
                   {player.matches_played}
                 </div>
               </div>
@@ -217,9 +114,8 @@ const Leaderboard = () => {
           })}
       </div>
 
-      {/* Back to Home Button */}
-      <div style={{ marginTop: "2rem" }}>
-        <button className="btn-ghost" onClick={() => navigate("/")}>
+      <div className="mt-8">
+        <button className="btn-ghost text-sm" onClick={() => navigate("/")}>
           ← Back to Arena
         </button>
       </div>
@@ -228,4 +124,3 @@ const Leaderboard = () => {
 };
 
 export default Leaderboard;
-

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios'; 
+import axios from 'axios';
 import { useSocket } from '../context/socketStore.js';
 
-// --- Extracted Components ---
 import MatchStats from './result/MatchStats.jsx';
 import AIReview from './result/AIReview.jsx';
 
@@ -12,16 +11,14 @@ const Result = () => {
   const location = useLocation();
   const { socket } = useSocket();
 
-  // 1. Grab data passed from the Race arena
-  const { 
-    didIWin = false, 
+  const {
+    didIWin = false,
     myName = 'You',
     opponentName = 'Opponent',
-    myCode = '', 
-    problemTitle = 'a coding challenge' 
+    myCode = '',
+    problemTitle = 'a coding challenge'
   } = location.state || {};
 
-  // 2. Dynamic state ready for your backend OpenAI response
   const [aiFeedback, setAiFeedback] = useState("Waiting for AI analysis...");
 
   useEffect(() => {
@@ -35,17 +32,14 @@ const Result = () => {
         setAiFeedback(data.review);
       } catch (error) {
         console.error("AI Fetch Error:", error);
-        
-        // 👉 Graceful AI Error Handling
-        if (error.response && error.response.data && error.response.data.error) {
+        if (error.response?.data?.error) {
           setAiFeedback(`⚠️ ${error.response.data.error}`);
         } else {
-          setAiFeedback("🏎️ Pit stop! The AI engines are running too hot. Try your request again in 60 seconds. ");
+          setAiFeedback("🏎️ Pit stop! The AI engines are running too hot. Try again in 60 seconds.");
         }
       }
     };
 
-    // Only run the review if we actually have code to analyze
     if (myCode && myCode !== "// Waiting for problem...") {
       fetchReview();
     } else {
@@ -53,35 +47,25 @@ const Result = () => {
     }
   }, [myCode, problemTitle, didIWin]);
 
-  // 4. Single action: Clean up the socket, then immediately go queue up again
   const handleNewRace = () => {
-    if (socket) {
-      socket.emit('leave_room'); 
-    }
+    if (socket) socket.emit('leave_room');
     navigate('/');
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '2rem', background: '#000' }}>
-      <div style={{ width: '100%', maxWidth: '480px' }}>
-        
-        {/* Shows who won based on the names */}
+    <div className="flex items-center justify-center min-h-[calc(100vh-60px)] px-4 py-8 bg-black">
+      <div className="w-full max-w-[500px]">
+
         <MatchStats didIWin={didIWin} opponentName={opponentName} myName={myName} />
 
-        <div style={{ height: '1px', background: '#1e1e1e', margin: '24px 0', width: '100%' }}></div>
+        <div className="h-px bg-[#1e1e1e] my-6 w-full" />
 
-        {/* Dynamic AI Review Box */}
         <AIReview reviewText={aiFeedback} />
 
-        {/* Massive Call to Action */}
-        <div style={{ marginTop: '24px' }}>
-          <button 
-            style={{ 
-              width: '100%', padding: '16px 0', background: '#ff6b2b', color: '#fff', 
-              border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '800', 
-              cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px'
-            }} 
+        <div className="mt-6">
+          <button
             onClick={handleNewRace}
+            className="w-full py-4 bg-[#ff6b2b] hover:bg-[#ff824d] active:scale-[0.98] text-white border-none rounded-lg text-base font-extrabold cursor-pointer uppercase tracking-[1px] transition-all"
           >
             New Race ⚡
           </button>

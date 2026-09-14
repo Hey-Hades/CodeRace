@@ -8,6 +8,7 @@ import { useUserStore } from "../store/useUserStore.js";
 import { useResizablePanels } from "../hooks/race/useResizablePanels.js";
 import { useRaceTimer } from "../hooks/race/useRaceTimer.js";
 import { useSubmission } from "../hooks/race/useSubmission.js";
+import { useIsMobile } from "../hooks/useIsMobile.js";
 
 // --- Extracted Components ---
 import ReadyOverlay from "./race/ReadyOverlay.jsx";
@@ -80,6 +81,9 @@ const Race = () => {
   // ==========================================
   // 1. CUSTOM HOOKS
   // ==========================================
+  const isMobile = useIsMobile(768);
+  const [mobileTab, setMobileTab] = useState("problem"); // "problem" | "editor" | "console"
+
   const { leftWidth, bottomHeight, isDragging, setIsDragging } =
     useResizablePanels();
 
@@ -554,76 +558,139 @@ const Race = () => {
         onLeaveMatch={handleLeaveMatch}
         colors={colors}
         ping={ping}
+        mobileTab={mobileTab}
+        setMobileTab={setMobileTab}
       />
 
-      <div
-        id="workspace-container"
-        style={{
-          boxSizing: "border-box",
-          display: "flex",
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-          padding: "6px",
-          gap: "6px",
-        }}
-      >
-        <ProblemPanel
-          leftWidth={leftWidth}
-          problem={problem}
-          difficulty={difficulty}
-          companiesList={companiesList}
-          examples={examples}
-          constraints={constraints}
-          hints={hints}
-          colors={colors}
-        />
+      {/* ── MOBILE LAYOUT: full-screen tab panels ─────────────────────── */}
+      {isMobile ? (
+        <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+          {mobileTab === "problem" && (
+            <div style={{ height: "100%", padding: "6px" }}>
+              <ProblemPanel
+                leftWidth={100}
+                isMobile={true}
+                problem={problem}
+                difficulty={difficulty}
+                companiesList={companiesList}
+                examples={examples}
+                constraints={constraints}
+                hints={hints}
+                colors={colors}
+              />
+            </div>
+          )}
 
-        <SplitHandle
-          direction="vertical"
-          onMouseDown={() => setIsDragging("vertical")}
-          colors={colors}
-        />
+          {mobileTab === "editor" && (
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                padding: "6px",
+              }}
+            >
+              <EditorPanel
+                isMobile={true}
+                bottomHeight={0}
+                raceStarted={raceStarted}
+                timeLeft={timeLeft}
+                language={language}
+                availableLanguages={availableLanguages}
+                handleLanguageSelect={handleLanguageSelect}
+                handleResetCode={handleResetCode}
+                code={code}
+                handleCodeChange={handleCodeChange}
+                handleEditorWillMount={handleEditorWillMount}
+                handleEditorDidMount={handleEditorDidMount}
+                colors={colors}
+              />
+            </div>
+          )}
 
+          {mobileTab === "console" && (
+            <div style={{ height: "100%", padding: "6px" }}>
+              <ConsolePanel
+                isMobile={true}
+                bottomHeight={100}
+                examples={examples}
+                terminalLogs={terminalLogs}
+                colors={colors}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── DESKTOP LAYOUT: draggable split panels ──────────────────── */
         <div
+          id="workspace-container"
           style={{
             boxSizing: "border-box",
-            width: `calc(${100 - leftWidth}% - 10px)`,
             display: "flex",
-            flexDirection: "column",
-            gap: "6px",
+            flex: 1,
+            minHeight: 0,
             overflow: "hidden",
+            padding: "6px",
+            gap: "6px",
           }}
         >
-          <EditorPanel
-            bottomHeight={bottomHeight}
-            raceStarted={raceStarted}
-            timeLeft={timeLeft}
-            language={language}
-            availableLanguages={availableLanguages}
-            handleLanguageSelect={handleLanguageSelect}
-            handleResetCode={handleResetCode}
-            code={code}
-            handleCodeChange={handleCodeChange}
-            handleEditorWillMount={handleEditorWillMount}
-            handleEditorDidMount={handleEditorDidMount}
+          <ProblemPanel
+            leftWidth={leftWidth}
+            problem={problem}
+            difficulty={difficulty}
+            companiesList={companiesList}
+            examples={examples}
+            constraints={constraints}
+            hints={hints}
             colors={colors}
           />
 
           <SplitHandle
-            direction="horizontal"
-            onMouseDown={() => setIsDragging("horizontal")}
+            direction="vertical"
+            onMouseDown={() => setIsDragging("vertical")}
             colors={colors}
           />
 
-          <ConsolePanel
-            bottomHeight={bottomHeight}
-            examples={examples}
-            terminalLogs={terminalLogs}
-            colors={colors}
-          />
+          <div
+            style={{
+              boxSizing: "border-box",
+              width: `calc(${100 - leftWidth}% - 10px)`,
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              overflow: "hidden",
+            }}
+          >
+            <EditorPanel
+              bottomHeight={bottomHeight}
+              raceStarted={raceStarted}
+              timeLeft={timeLeft}
+              language={language}
+              availableLanguages={availableLanguages}
+              handleLanguageSelect={handleLanguageSelect}
+              handleResetCode={handleResetCode}
+              code={code}
+              handleCodeChange={handleCodeChange}
+              handleEditorWillMount={handleEditorWillMount}
+              handleEditorDidMount={handleEditorDidMount}
+              colors={colors}
+            />
+
+            <SplitHandle
+              direction="horizontal"
+              onMouseDown={() => setIsDragging("horizontal")}
+              colors={colors}
+            />
+
+            <ConsolePanel
+              bottomHeight={bottomHeight}
+              examples={examples}
+              terminalLogs={terminalLogs}
+              colors={colors}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

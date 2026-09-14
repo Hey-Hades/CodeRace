@@ -2,6 +2,7 @@ import { useState } from "react";
 
 const ProblemPanel = ({
   leftWidth,
+  isMobile = false,
   problem,
   difficulty,
   companiesList = [],
@@ -33,7 +34,7 @@ const ProblemPanel = ({
   return (
     <div
       style={{
-        width: `${leftWidth}%`,
+        width: isMobile ? "100%" : `${leftWidth}%`,
         "--panel-bg": colors.bgPanel,
         "--panel-border": colors.border,
         "--panel-header": colors.bgHeader,

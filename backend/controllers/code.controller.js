@@ -3,6 +3,7 @@ import axios from "axios";
 import supabase from "../config/supabase.js";
 import { generatePayload } from "../utils/harness.js";
 import { declareWinner } from "./match.controller.js";
+import { getIo } from "../utils/io.js";
 
 const oneCompilerLanguageMap = {
   javascript: "nodejs",
@@ -10,6 +11,9 @@ const oneCompilerLanguageMap = {
   cpp: "cpp",
   java: "java",
 };
+
+const ALLOWED_LANGUAGES = ["javascript", "python", "cpp", "java"];
+const MAX_CODE_SIZE_BYTES = 50 * 1024; // 50 KB
 
 // @desc   Execute code on OneCompiler with Photo Finish logic (SUBMIT)
 // @route  POST /api/code/execute
@@ -19,10 +23,24 @@ export const executeCode = asyncHandler(async (req, res) => {
 
   const { code, language, problemId, roomId, userId } = req.body;
 
+  // ── Input Validation ──────────────────────────────────────────────────────
   if (!code || !language || !problemId) {
     res.status(400);
     throw new Error("Please provide code, language, and problemId");
   }
+
+  if (!ALLOWED_LANGUAGES.includes(language)) {
+    return res.status(400).json({ success: false, error: `Unsupported language. Allowed: ${ALLOWED_LANGUAGES.join(", ")}` });
+  }
+
+  if (Buffer.byteLength(code, "utf8") > MAX_CODE_SIZE_BYTES) {
+    return res.status(400).json({ success: false, error: "Code exceeds maximum allowed size (50 KB)." });
+  }
+
+  if (!/^[a-z0-9-]+$/.test(problemId)) {
+    return res.status(400).json({ success: false, error: "Invalid problem ID format." });
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   console.log(
     `⚡ Received ${language} submission from user ${userId || "Anonymous"} for ${problemId}`,
@@ -115,8 +133,8 @@ export const executeCode = asyncHandler(async (req, res) => {
           executionTimeMs,
         );
 
-        if (matchResult.success && global.io) {
-          global.io.to(roomId).emit("match_over", {
+        if (matchResult.success && getIo()) {
+          getIo().to(roomId).emit("match_over", {
             winnerId: userId,
             pointsExchanged: matchResult.pointsExchanged,
           });
@@ -156,10 +174,24 @@ export const executeCode = asyncHandler(async (req, res) => {
 export const runSampleCode = asyncHandler(async (req, res) => {
   const { code, language, problemId } = req.body;
 
+  // ── Input Validation ──────────────────────────────────────────────────────
   if (!code || !language || !problemId) {
     res.status(400);
     throw new Error("Please provide code, language, and problemId");
   }
+
+  if (!ALLOWED_LANGUAGES.includes(language)) {
+    return res.status(400).json({ success: false, error: `Unsupported language. Allowed: ${ALLOWED_LANGUAGES.join(", ")}` });
+  }
+
+  if (Buffer.byteLength(code, "utf8") > MAX_CODE_SIZE_BYTES) {
+    return res.status(400).json({ success: false, error: "Code exceeds maximum allowed size (50 KB)." });
+  }
+
+  if (!/^[a-z0-9-]+$/.test(problemId)) {
+    return res.status(400).json({ success: false, error: "Invalid problem ID format." });
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   // FETCH METADATA AND TEST CASES
   const { data: problem, error: dbError } = await supabase
