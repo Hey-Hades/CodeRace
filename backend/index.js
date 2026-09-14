@@ -21,11 +21,26 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 const app = express();
 const httpServer = createServer(app);
 
-// ─── CORS origins: only allow known domains ───────────────────────────────────
-const isProd = process.env.NODE_ENV === "production";
-const origin = isProd
-  ? ["https://coderace-live.vercel.app"]
-  : ["http://localhost:5173", "http://localhost:5174", "https://coderace-live.vercel.app"];
+// ─── CORS origins ─────────────────────────────────────────────────────────────
+// Always allow both known Vercel deployments + localhost for dev.
+// Set CLIENT_URL on Render's dashboard if you deploy to a different domain.
+const ALLOWED_ORIGINS = [
+  "https://coderace-app.vercel.app",       // primary production URL
+  "https://coderace-live.vercel.app",      // legacy / preview URL
+  "http://localhost:5173",                 // Vite dev server
+  "http://localhost:5174",
+];
+
+if (process.env.CLIENT_URL) {
+  ALLOWED_ORIGINS.push(process.env.CLIENT_URL);
+}
+
+const origin = (requestOrigin, callback) => {
+  // Allow requests with no origin (e.g. Postman, curl, server-to-server)
+  if (!requestOrigin) return callback(null, true);
+  if (ALLOWED_ORIGINS.includes(requestOrigin)) return callback(null, true);
+  callback(new Error(`CORS: origin '${requestOrigin}' is not allowed`));
+};
 
 // ─── Socket.IO ────────────────────────────────────────────────────────────────
 const io = new Server(httpServer, {
