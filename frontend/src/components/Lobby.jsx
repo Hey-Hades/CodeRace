@@ -267,7 +267,7 @@ const Lobby = () => {
 
   return (
     <div
-      className="flex items-center justify-center w-full min-h-[calc(100vh-60px)] px-4 py-8"
+      className="w-full min-h-[calc(100vh-60px)] px-4 py-6 flex flex-col items-center"
     >
       <div className="w-full max-w-[440px]">
         {!isWaiting ? (

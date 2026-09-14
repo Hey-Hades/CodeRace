@@ -28,7 +28,7 @@ const LobbyForm = ({
   const getButtonClasses = (level, currentVal) => {
     const isSelected = currentVal === level;
     const base =
-      "flex-1 p-3 text-xs font-semibold cursor-pointer rounded-lg transition-all font-inherit";
+      "flex-1 p-2.5 text-xs font-semibold cursor-pointer rounded-lg transition-all font-inherit";
 
     if (!isSelected) {
       return `${base} bg-[#0a0a0a] border border-[#1e1e1e] text-[#666] hover:border-[#333] hover:text-[#999]`;
@@ -45,24 +45,26 @@ const LobbyForm = ({
   const getInputClasses = (id) => {
     const borderClass =
       focusedInput === id ? "border-[#ff6b2b]" : "border-[#1e1e1e]";
-    return `w-full bg-[#0a0a0a] border ${borderClass} rounded-lg text-white text-[13px] px-3.5 py-3 outline-none font-inherit transition-colors box-border placeholder:text-[#444] focus:border-[#ff6b2b]`;
+    return `w-full bg-[#0a0a0a] border ${borderClass} rounded-lg text-white text-[13px] px-3.5 py-2.5 outline-none font-inherit transition-colors box-border placeholder:text-[#444] focus:border-[#ff6b2b]`;
   };
+
+  const label = "block text-[10px] text-[#666] uppercase tracking-[1px] mb-1.5 font-semibold";
 
   return (
     <>
-      {/* Header Section */}
-      <div className="mb-6">
-        <div className="text-[11px] text-[#555] tracking-[1px] uppercase mb-2 font-semibold">
+      {/* Header Section — tighter on laptop */}
+      <div className="mb-4">
+        <div className="text-[11px] text-[#555] tracking-[1px] uppercase mb-1.5 font-semibold">
           {isPracticeMode ? "Solo Training" : "Multiplayer Arena"}
         </div>
-        <div className="text-2xl sm:text-[28px] font-extrabold text-white leading-[1.2] mb-1.5 tracking-[-0.5px]">
+        <div className="text-2xl sm:text-[26px] font-extrabold text-white leading-[1.2] mb-1 tracking-[-0.5px]">
           {isPracticeMode
             ? "Hone your skills."
             : multiplayerMode === "create"
               ? "Set up your match."
               : "Join the arena."}
         </div>
-        <div className="text-xs text-[#777] leading-[1.6]">
+        <div className="text-xs text-[#777] leading-[1.5]">
           {isPracticeMode
             ? "Select a difficulty and target company to begin your offline practice session."
             : multiplayerMode === "create"
@@ -73,13 +75,10 @@ const LobbyForm = ({
 
       {/* Mode Toggle (Create/Join) */}
       {!isPracticeMode && (
-        <div className="flex bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg p-1 mb-4">
+        <div className="flex bg-[#0a0a0a] border border-[#1e1e1e] rounded-lg p-1 mb-3">
           <button
-            onClick={() => {
-              onModeChange("create");
-              onFocusChange(null);
-            }}
-            className={`flex-1 p-2.5 text-xs font-semibold border-none rounded-md cursor-pointer transition-all ${
+            onClick={() => { onModeChange("create"); onFocusChange(null); }}
+            className={`flex-1 p-2 text-xs font-semibold border-none rounded-md cursor-pointer transition-all ${
               multiplayerMode === "create"
                 ? "bg-[#1a0f0a] text-[#ff6b2b]"
                 : "bg-transparent text-[#666] hover:text-[#999]"
@@ -88,11 +87,8 @@ const LobbyForm = ({
             Create Room
           </button>
           <button
-            onClick={() => {
-              onModeChange("join");
-              onFocusChange(null);
-            }}
-            className={`flex-1 p-2.5 text-xs font-semibold border-none rounded-md cursor-pointer transition-all ${
+            onClick={() => { onModeChange("join"); onFocusChange(null); }}
+            className={`flex-1 p-2 text-xs font-semibold border-none rounded-md cursor-pointer transition-all ${
               multiplayerMode === "join"
                 ? "bg-[#1a0f0a] text-[#ff6b2b]"
                 : "bg-transparent text-[#666] hover:text-[#999]"
@@ -105,10 +101,8 @@ const LobbyForm = ({
 
       {/* Player Name Input */}
       {!isNameLocked && (
-        <div className="mb-4">
-          <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
-            Your Name
-          </label>
+        <div className="mb-3">
+          <label className={label}>Your Name</label>
           <input
             placeholder="Hey-Hades"
             className={getInputClasses("name")}
@@ -124,47 +118,28 @@ const LobbyForm = ({
       {/* Settings (Practice & Create Room Only) */}
       {(isPracticeMode || multiplayerMode === "create") && (
         <>
-          <div className="mb-4">
-            <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
-              Difficulty
-            </label>
+          {/* Difficulty */}
+          <div className="mb-3">
+            <label className={label}>Difficulty</label>
             <div className="flex gap-1.5">
-              <button
-                disabled={isRequestingRoom}
-                onClick={() => onDifficultyChange("easy")}
-                className={getButtonClasses("easy", difficulty)}
-              >
-                Easy
-              </button>
-              <button
-                disabled={isRequestingRoom}
-                onClick={() => onDifficultyChange("med")}
-                className={getButtonClasses("med", difficulty)}
-              >
-                Medium
-              </button>
-              <button
-                disabled={isRequestingRoom}
-                onClick={() => onDifficultyChange("hard")}
-                className={getButtonClasses("hard", difficulty)}
-              >
-                Hard
-              </button>
+              {["easy", "med", "hard"].map((lvl) => (
+                <button
+                  key={lvl}
+                  disabled={isRequestingRoom}
+                  onClick={() => onDifficultyChange(lvl)}
+                  className={getButtonClasses(lvl, difficulty)}
+                >
+                  {lvl === "med" ? "Medium" : lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
-              Time Control
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {/* Presets */}
-              {[
-                "Bullet (5 min)",
-                "Blitz (15 min)",
-                "Rapid (30 min)",
-                "Zen (No Limit)",
-              ].map((time) => (
+          {/* Time Control */}
+          <div className="mb-3">
+            <label className={label}>Time Control</label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {["Bullet (5 min)", "Blitz (15 min)", "Rapid (30 min)", "Zen (No Limit)"].map((time) => (
                 <button
                   key={time}
                   disabled={isRequestingRoom}
@@ -175,65 +150,48 @@ const LobbyForm = ({
                 </button>
               ))}
 
-              {/* Premium Slider for Custom Time */}
+              {/* Custom Time Slider */}
               <div
                 onClick={() => !isRequestingRoom && onMatchTypeChange("Custom")}
-                className={`col-span-2 flex flex-col justify-center px-4 py-3 h-[60px] rounded-lg cursor-pointer transition-all ${
+                className={`col-span-2 flex flex-col justify-center px-3 py-2 rounded-lg cursor-pointer transition-all ${
                   matchType === "Custom"
                     ? "bg-[#1a0f0a] border border-[#ff6b2b44]"
                     : "bg-[#0a0a0a] border border-[#1e1e1e] hover:border-[#333]"
                 }`}
               >
-                <div className="flex justify-between items-center mb-2.5">
-                  <span
-                    className={`text-xs font-semibold transition-colors ${
-                      matchType === "Custom" ? "text-[#ff6b2b]" : "text-[#666]"
-                    }`}
-                  >
+                <div className="flex justify-between items-center mb-2">
+                  <span className={`text-xs font-semibold transition-colors ${matchType === "Custom" ? "text-[#ff6b2b]" : "text-[#666]"}`}>
                     Custom Minutes
                   </span>
-                  <span
-                    className={`text-xs font-bold transition-colors ${
-                      matchType === "Custom" ? "text-white" : "text-[#555]"
-                    }`}
-                  >
+                  <span className={`text-xs font-bold transition-colors ${matchType === "Custom" ? "text-white" : "text-[#555]"}`}>
                     {customTime || 10}{" "}
-                    <span className="text-[10px] font-normal text-[#666]">
-                      min
-                    </span>
+                    <span className="text-[10px] font-normal text-[#666]">min</span>
                   </span>
                 </div>
-
                 <input
                   type="range"
                   min="1"
                   max="180"
                   value={customTime || 10}
                   disabled={isRequestingRoom}
-                  onChange={(e) => {
-                    onCustomTimeChange(e.target.value);
-                    onMatchTypeChange("Custom");
-                  }}
+                  onChange={(e) => { onCustomTimeChange(e.target.value); onMatchTypeChange("Custom"); }}
                   className={`w-full h-1 bg-[#1e1e1e] rounded-lg appearance-none cursor-pointer outline-none transition-all
                     ${matchType === "Custom" ? "[&::-webkit-slider-thumb]:bg-[#ff6b2b]" : "[&::-webkit-slider-thumb]:bg-[#444]"}
-                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 
+                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:transition-all
                     hover:[&::-webkit-slider-thumb]:scale-125 active:[&::-webkit-slider-thumb]:scale-90
-                    ${matchType === "Custom" ? "hover:[&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,107,43,0.6)]" : ""}
-                    
+                    ${matchType === "Custom" ? "hover:[&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(255,107,43,0.6)]" : ""}
                     ${matchType === "Custom" ? "[&::-moz-range-thumb]:bg-[#ff6b2b]" : "[&::-moz-range-thumb]:bg-[#444]"}
-                    [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:border-none 
-                    [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:transition-all
-                    hover:[&::-moz-range-thumb]:scale-125 active:[&::-moz-range-thumb]:scale-90`}
+                    [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:border-none
+                    [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:transition-all`}
                 />
               </div>
             </div>
           </div>
 
-          <div className="mb-5">
-            <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
-              Target Company
-            </label>
+          {/* Target Company */}
+          <div className="mb-4">
+            <label className={label}>Target Company</label>
             <select
               value={company}
               disabled={isRequestingRoom}
@@ -254,10 +212,8 @@ const LobbyForm = ({
 
       {/* Join Room Code Input */}
       {!isPracticeMode && multiplayerMode === "join" && (
-        <div className="mb-5">
-          <label className="block text-[10px] text-[#666] uppercase tracking-[1px] mb-2 font-semibold">
-            Room Code
-          </label>
+        <div className="mb-4">
+          <label className={label}>Room Code</label>
           <input
             placeholder="RACE17"
             className={`${getInputClasses("code")} uppercase tracking-[2px]`}
@@ -272,7 +228,7 @@ const LobbyForm = ({
 
       {/* Error Display */}
       {lobbyError && (
-        <div className="text-[#ef4743] text-[13px] mb-4 text-center font-semibold">
+        <div className="text-[#ef4743] text-[13px] mb-3 text-center font-semibold">
           {lobbyError}
         </div>
       )}
@@ -281,12 +237,11 @@ const LobbyForm = ({
       <button
         disabled={isRequestingRoom}
         onClick={onSubmit}
-        className={`w-full py-3.5 rounded-lg text-white text-sm font-bold shadow-[0_4px_14px_rgba(255,107,43,0.2)] transition-all
-          ${
-            isRequestingRoom
-              ? "bg-[#ff6b2b] opacity-70 cursor-not-allowed"
-              : "bg-[#ff6b2b] hover:bg-[#ff824d] active:scale-95"
-          }`}
+        className={`w-full py-3 rounded-lg text-white text-sm font-bold shadow-[0_4px_14px_rgba(255,107,43,0.2)] transition-all ${
+          isRequestingRoom
+            ? "bg-[#ff6b2b] opacity-70 cursor-not-allowed"
+            : "bg-[#ff6b2b] hover:bg-[#ff824d] active:scale-95"
+        }`}
       >
         {primaryText}
       </button>
