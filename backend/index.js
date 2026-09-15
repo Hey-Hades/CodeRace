@@ -13,6 +13,7 @@ import codeRoutes from "./routes/code.route.js";
 import aiRoutes from "./routes/ai.route.js";
 import { handleSocketConnection } from "./controllers/socket.controller.js";
 import { setIo } from "./utils/io.js";
+import { initCronJobs } from "./cron/testCaseGenerator.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,9 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const app = express();
 const httpServer = createServer(app);
+
+// ─── BACKGROUND JOBS ──────────────────────────────────────────────────────────
+initCronJobs();
 
 // ─── CORS origins ─────────────────────────────────────────────────────────────
 // Always allow both known Vercel deployments + localhost for dev.
