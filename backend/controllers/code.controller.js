@@ -3,6 +3,7 @@ import axios from "axios";
 import supabase from "../config/supabase.js";
 import { generatePayload } from "../utils/harness.js";
 import { declareWinner } from "./match.controller.js";
+import { activeRooms } from "./socket.controller.js";
 import { getIo } from "../utils/io.js";
 
 const oneCompilerLanguageMap = {
@@ -132,7 +133,15 @@ export const executeCode = asyncHandler(async (req, res) => {
 
       if (allPassed && roomId) {
         const executionTimeMs = Date.now() - submissionTime;
-        const matchResult = await declareWinner(roomId, userId, problemId, executionTimeMs);
+        
+        let loserId = null;
+        const room = activeRooms.get(roomId);
+        if (room && room.players) {
+          const loser = room.players.find(p => p.id !== userId);
+          if (loser) loserId = loser.id;
+        }
+
+        const matchResult = await declareWinner(roomId, userId, loserId, problemId, executionTimeMs);
 
         if (matchResult.success && getIo()) {
           getIo().to(roomId).emit("match_over", {

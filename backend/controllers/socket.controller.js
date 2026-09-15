@@ -21,7 +21,7 @@ const sanitizeString = (str, maxLen = 64) =>
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const activeRooms = new Map();
+export const activeRooms = new Map();
 
 export const handleSocketConnection = (io, socket) => {
   console.log(`🟢 Socket connected: ${socket.id}`);
@@ -399,6 +399,7 @@ export const handleSocketConnection = (io, socket) => {
           const result = await declareWinner(
             room.dbId,
             socket.id,
+            loser.id, // Fixed: Pass the loserId!
             problemId,
             executionTimeMs || 0,
           );
