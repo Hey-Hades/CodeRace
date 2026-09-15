@@ -71,7 +71,7 @@ const Result = () => {
   const winnerName    = didIWin ? myName : opponentName;
 
   return (
-    <div className="flex items-start justify-center min-h-[calc(100vh-60px)] px-4 py-8 bg-black">
+    <div className="flex items-start justify-center min-h-[calc(100vh-60px)] px-4 py-8 pb-12 bg-black">
       <div className="w-full max-w-[560px]">
 
         {/* Match outcome */}
@@ -104,7 +104,7 @@ const Result = () => {
 
             {showSolution && (
               <div className="border border-[#1e1e1e] border-t-0 rounded-b-lg overflow-hidden">
-                <pre className="bg-[#0a0a0a] p-4 text-xs text-neutral-300 overflow-x-auto leading-relaxed font-mono whitespace-pre">
+                <pre className="bg-[#0a0a0a] p-4 text-xs text-neutral-300 overflow-x-auto max-w-full leading-relaxed font-mono whitespace-pre">
                   {winnerCode}
                 </pre>
               </div>

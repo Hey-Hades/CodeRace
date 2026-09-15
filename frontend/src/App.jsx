@@ -99,7 +99,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-[#ff6b2b]/30 flex flex-col">
         <Navbar user={profile} onLogout={handleLogout} />
-        <div className="flex-1 w-full flex flex-col">
+        <div className="flex-1 w-full flex flex-col overflow-y-auto">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
