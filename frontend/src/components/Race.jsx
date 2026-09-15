@@ -332,6 +332,7 @@ const Race = () => {
             problemTitle: problem?.title,
             difficulty,
             matchType,
+            isPractice,
             // Feature 2: winner's code visible to both players on result page
             winnerCode:     winnerCode     || (didIWin ? code : ""),
             winnerLanguage: winnerLanguage || "cpp",

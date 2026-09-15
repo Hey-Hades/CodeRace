@@ -21,6 +21,7 @@ const Result = () => {
     problemTitle  = 'a coding challenge',
     difficulty    = 'medium',
     matchType     = '',
+    isPractice    = false,
     winnerCode    = '',
     winnerLanguage = 'cpp',
   } = location.state || {};
@@ -113,7 +114,7 @@ const Result = () => {
 
         {/* Feature 4: Buttons — Rematch + New Race */}
         <div className="flex flex-col sm:flex-row gap-3 mt-2">
-          {matchType && matchType !== 'practice' && (
+          {!isPractice && (
             <button
               onClick={handleRematch}
               className="flex-1 py-3.5 bg-[#111] hover:bg-[#1a1a1a] active:scale-[0.98] text-white border border-[#333] hover:border-[#555] rounded-lg text-sm font-bold cursor-pointer uppercase tracking-[1px] transition-all"
