@@ -119,39 +119,43 @@ export const executeCode = asyncHandler(async (req, res) => {
     // PARSE DETERMINISTIC TOKEN EMITTED BY THE C++ BINARY
     const resultMatch = stdout.match(/RESULT\|(\d+)\/(\d+)/);
 
+    // Parse per-case pass/fail lines: CASE|0|PASS, CASE|1|FAIL …
+    const caseResults = [];
+    for (const m of stdout.matchAll(/CASE\|(\d+)\|(PASS|FAIL)/g)) {
+      caseResults.push({ index: parseInt(m[1]), passed: m[2] === "PASS" });
+    }
+
     if (resultMatch) {
       const passedCases = parseInt(resultMatch[1]);
-      const totalCases = parseInt(resultMatch[2]);
-      const allPassed = passedCases === totalCases;
+      const totalCases  = parseInt(resultMatch[2]);
+      const allPassed   = passedCases === totalCases;
 
       if (allPassed && roomId) {
         const executionTimeMs = Date.now() - submissionTime;
-        const matchResult = await declareWinner(
-          roomId,
-          userId,
-          problemId,
-          executionTimeMs,
-        );
+        const matchResult = await declareWinner(roomId, userId, problemId, executionTimeMs);
 
         if (matchResult.success && getIo()) {
           getIo().to(roomId).emit("match_over", {
-            winnerId: userId,
+            winnerId:       userId,
             pointsExchanged: matchResult.pointsExchanged,
+            winnerCode:     code,
+            winnerLanguage: language,
           });
         }
       }
 
       res.status(200).json({
-        success: true,
-        passedCount: passedCases,
-        totalCount: totalCases,
-        allPassed: allPassed,
+        success:        true,
+        passedCount:    passedCases,
+        totalCount:     totalCases,
+        allPassed,
+        caseResults,
         executionTimeMs: Date.now() - submissionTime,
       });
     } else {
       res.status(200).json({
         success: false,
-        error: "Could not parse execution result. Did your code crash?",
+        error:   "Could not parse execution result. Did your code crash?",
         details: runResult.stderr || stdout,
       });
     }

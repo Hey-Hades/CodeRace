@@ -360,12 +360,16 @@ export const handleSocketConnection = (io, socket) => {
     socket.to(roomId).emit("opponent_progress", { progress: safeProgress });
   });
 
-  socket.on("player_won", async ({ roomId, executionTimeMs }) => {
+  socket.on("player_won", async ({ roomId, executionTimeMs, code, language }) => {
     const room = activeRooms.get(roomId);
 
     if (room && room.status === "active") {
       room.status = "finished";
-      io.to(roomId).emit("match_over", { winnerId: socket.id });
+      io.to(roomId).emit("match_over", {
+        winnerId:      socket.id,
+        winnerCode:    code     || "",
+        winnerLanguage: language || "cpp",
+      });
 
       try {
         await supabase

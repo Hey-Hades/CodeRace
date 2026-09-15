@@ -95,6 +95,7 @@ const Race = () => {
     setIsSubmitting,
     terminalLogs,
     setTerminalLogs,
+    caseResults,
     myProgress,
     totalCases,
     handleSubmitCode,
@@ -279,7 +280,7 @@ const Race = () => {
       setOpponentProgress(progress),
     );
 
-    socket.on("match_over", async ({ winnerId }) => {
+    socket.on("match_over", async ({ winnerId, winnerCode, winnerLanguage }) => {
       const didIWin = winnerId === socket.id;
       const timeTakenSecs = timeLimitMinutes * 60 - timeLeft;
       const timeTakenMins = Math.floor(timeTakenSecs / 60) || 1;
@@ -298,13 +299,12 @@ const Race = () => {
 
       try {
         const raceData = {
-          wpm: netWPM, // Calculate this from your progress/timer
-          accuracy: finalAccuracy, // Or whatever logic you have
+          wpm: netWPM,
+          accuracy: finalAccuracy,
           timeTaken: timeTakenSecs,
           problemTitle: problem?.title,
           didIWin: didIWin,
         };
-
         await saveRaceResult(user, raceData);
         console.log("Result saved successfully!");
       } catch (err) {
@@ -330,6 +330,11 @@ const Race = () => {
             opponentName,
             myCode: code,
             problemTitle: problem?.title,
+            difficulty,
+            matchType,
+            // Feature 2: winner's code visible to both players on result page
+            winnerCode:     winnerCode     || (didIWin ? code : ""),
+            winnerLanguage: winnerLanguage || "cpp",
           },
         });
       }, 3000);
@@ -615,6 +620,7 @@ const Race = () => {
                 bottomHeight={100}
                 examples={examples}
                 terminalLogs={terminalLogs}
+                caseResults={caseResults}
                 colors={colors}
               />
             </div>
@@ -686,6 +692,7 @@ const Race = () => {
               bottomHeight={bottomHeight}
               examples={examples}
               terminalLogs={terminalLogs}
+              caseResults={caseResults}
               colors={colors}
             />
           </div>

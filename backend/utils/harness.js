@@ -275,7 +275,12 @@ const generateBatchCppWrapper = (userCode, metadata, testCases) => {
   // Direct C++ evaluation
   code += `
     if (has_expected_check == 1) {
-      if (checkExpected(result, expected_val)) { passed_count++; }
+      if (checkExpected(result, expected_val)) {
+        passed_count++;
+        cout << "\\nCASE|" << t << "|PASS\\n";
+      } else {
+        cout << "\\nCASE|" << t << "|FAIL\\n";
+      }
     }
   }
   cout << "\\nRESULT|" << passed_count << "/" << total_cases << "\\n";

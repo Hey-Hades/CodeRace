@@ -11,6 +11,7 @@ import Result from "./components/Result.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Auth from "./components/AuthPage.jsx";
+import Profile from "./components/Profile.jsx";
 import { useEffect } from "react";
 import { useUserStore } from "./store/useUserStore.js";
 import { supabase } from "./utils/supabaseClient.js";
@@ -101,15 +102,13 @@ function App() {
         <div className="flex-1 w-full flex flex-col">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route
-              path="/auth"
-              element={user ? <Navigate to="/" /> : <Auth />}
-            />
+            <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/practice-lobby" element={<Lobby />} />
             <Route path="/race" element={<Race />} />
             <Route path="/result" element={<Result />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>
       </div>

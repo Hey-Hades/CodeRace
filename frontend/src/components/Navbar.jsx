@@ -93,6 +93,12 @@ const Navbar = ({ user, onLogout }) => {
                 <p className="text-sm font-mono text-white normal-case tracking-normal truncate">{user.username}</p>
                 <p className="text-[10px] text-[#666] tracking-wider normal-case mt-0.5 truncate">{user.email}</p>
               </div>
+              <button onClick={() => { setIsDropdownOpen(false); navigate('/profile'); }} className="w-full text-left px-4 py-2.5 text-[#666] hover:text-white hover:bg-[#111] transition-colors uppercase text-[10px] tracking-wider font-semibold flex items-center gap-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                View Profile
+              </button>
               <button onClick={() => { setIsDropdownOpen(false); onLogout(); }} className="w-full text-left px-4 py-2.5 text-[#666] hover:text-[#ff6b2b] hover:bg-[#111] transition-colors uppercase text-[10px] tracking-wider font-semibold flex items-center gap-2">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
