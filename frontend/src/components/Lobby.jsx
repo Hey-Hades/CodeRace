@@ -4,7 +4,6 @@ import { useSocket } from "../context/socketStore.js";
 import LobbyForm from "./lobby/LobbyForm.jsx";
 import WaitingRoom from "./lobby/WaitingRoom.jsx";
 import { useUserStore } from "../store/useUserStore.js";
-import { supabase } from "../utils/supabaseClient.js";
 
 const Lobby = () => {
   const navigate = useNavigate();
@@ -12,54 +11,13 @@ const Lobby = () => {
   const { socket } = useSocket();
   const isPracticeMode = location.pathname.includes("practice");
 
-  // Prefill values from Rematch button
-  const prefill = location.state || {};
-
   const [multiplayerMode, setMultiplayerMode] = useState("create");
-  const [playerName, setPlayerName]           = useState("");
-  const [difficulty, setDifficulty]           = useState(prefill.prefillDifficulty || "med");
-  const [company, setCompany]                 = useState("All");
-  const [matchType, setMatchType]             = useState(prefill.prefillMatchType  || "Blitz (15 min)");
-  const [customTime, setCustomTime]           = useState("");
-  const [roomCodeInput, setRoomCodeInput]     = useState("");
-
-  // Dynamic companies from DB
-  const [companies, setCompanies]       = useState([]);
-  const [companiesLoading, setCompaniesLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("problems")
-          .select("companies")
-          .eq("available", true);
-
-        if (error) throw error;
-
-        const all = [
-          ...new Set(
-            (data || [])
-              .flatMap((p) => p.companies || [])
-              .filter(Boolean)
-              .map((c) => c.trim().toLowerCase()),
-          ),
-        ]
-          .sort()
-          .map((c) => c.charAt(0).toUpperCase() + c.slice(1));
-
-        setCompanies(all);
-      } catch (e) {
-        console.error("Failed to fetch companies:", e);
-        // Fallback to known companies
-        setCompanies(["Amazon", "Apple", "Google", "Microsoft"]);
-      } finally {
-        setCompaniesLoading(false);
-      }
-    };
-
-    fetchCompanies();
-  }, []);
+  const [playerName, setPlayerName] = useState("");
+  const [difficulty, setDifficulty] = useState("med");
+  const [company, setCompany] = useState("All");
+  const [matchType, setMatchType] = useState("Blitz (15 min)");
+  const [customTime, setCustomTime] = useState("");
+  const [roomCodeInput, setRoomCodeInput] = useState("");
 
   const [isWaiting, setIsWaiting] = useState(false);
   const [roomId, setRoomId] = useState(null);
@@ -326,8 +284,6 @@ const Lobby = () => {
             lobbyError={lobbyError}
             isRequestingRoom={isRequestingRoom}
             primaryText={primaryText()}
-            companies={companies}
-            companiesLoading={companiesLoading}
             onModeChange={(mode) => {
               setMultiplayerMode(mode);
               setLobbyError("");
