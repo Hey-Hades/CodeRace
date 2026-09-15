@@ -72,7 +72,7 @@ const ProblemPanel = ({
       </div>
 
       {/* MAIN CONTENT WORKSPACE */}
-      <div className="box-border flex-1 overflow-y-auto p-6 text-sm">
+      <div className="box-border flex-1 min-h-0 overflow-y-auto p-6 text-sm">
         {!problem ? (
           <div className="text-[var(--text-muted)]">Loading problem...</div>
         ) : leftTab === "description" ? (
@@ -127,7 +127,7 @@ const ProblemPanel = ({
             </div>
 
             {/* PROBLEM BODY DESCRIPTIONS */}
-            <div className="text-neutral-300 leading-relaxed mb-8 white-space-pre-wrap font-sans">
+            <div className="text-neutral-300 leading-relaxed mb-8 whitespace-pre-wrap font-sans">
               {cleanDescription}
             </div>
 
@@ -139,7 +139,7 @@ const ProblemPanel = ({
                     <div className="text-sm font-bold text-white mb-2">
                       Example {idx + 1}:
                     </div>
-                    <div className="box-border bg-[#161616] border-l-4 border-[var(--panel-border)] p-4 text-xs text-neutral-200 white-space-pre-wrap rounded-r font-mono">
+                    <div className="box-border bg-[#161616] border-l-4 border-[var(--panel-border)] p-4 text-xs text-neutral-200 whitespace-pre-wrap rounded-r font-mono">
                       {ex.example_text}
                     </div>
                   </div>
