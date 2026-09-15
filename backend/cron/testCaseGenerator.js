@@ -6,20 +6,27 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function generateTestCasesForProblem() {
   try {
-    // 1. Pick a random problem that is active
+    // 1. Pick a random active problem that needs more test cases (Cap at 30 max)
     const { data: problems, error } = await supabase
       .from("problems")
       .select("id, title, description, test_cases")
-      .eq("available", true)
-      .limit(50); // Fetch a batch to randomly select from
+      .eq("available", true);
       
-    if (error || !problems || problems.length === 0) {
+    if (error || !problems) {
       console.error("No problems found for auto-generation.");
       return;
     }
 
-    // Pick one random problem from the batch
-    const problem = problems[Math.floor(Math.random() * problems.length)];
+    // Filter out problems that already have 30+ test cases
+    const eligibleProblems = problems.filter(p => !p.test_cases || p.test_cases.length < 30);
+
+    if (eligibleProblems.length === 0) {
+      console.log("✅ All problems already have 30+ test cases. Nothing to generate today!");
+      return;
+    }
+
+    // Pick one random problem from the eligible batch
+    const problem = eligibleProblems[Math.floor(Math.random() * eligibleProblems.length)];
     console.log(`\n🤖 Auto-Generator analyzing problem: ${problem.title}...`);
 
     // 2. Ask Gemini to generate exactly 3 tricky test cases
