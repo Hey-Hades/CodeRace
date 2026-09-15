@@ -32,7 +32,8 @@ const Result = () => {
   useEffect(() => {
     const fetchReview = async () => {
       try {
-        const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/ai/review`, {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://coderace-backend.onrender.com";
+        const { data } = await axios.post(`${backendUrl}/api/ai/review`, {
           code: myCode,
           problemTitle,
           didIWin,

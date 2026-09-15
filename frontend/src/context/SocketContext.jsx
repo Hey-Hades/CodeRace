@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { SocketContext } from "./socketStore.js";
 
 const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL || "https://coderace-5xw6.onrender.com";
+  import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_BACKEND_URL || "https://coderace-backend.onrender.com";
 console.log("🚀 Socket URL:", SOCKET_URL);
 
 export const SocketProvider = ({ children }) => {

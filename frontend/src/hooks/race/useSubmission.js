@@ -27,8 +27,9 @@ export const useSubmission = (
     ]);
 
     try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://coderace-backend.onrender.com";
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/code/run`,
+        `${backendUrl}/api/code/run`,
         { language, code, problemId: problem?.id || "two-sum" },
       );
 
@@ -63,8 +64,9 @@ export const useSubmission = (
     ]);
 
     try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://coderace-backend.onrender.com";
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/code/execute`,
+        `${backendUrl}/api/code/execute`,
         {
           language,
           code,
