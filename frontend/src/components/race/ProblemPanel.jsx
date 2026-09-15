@@ -34,12 +34,13 @@ const ProblemPanel = ({
   return (
     <div
       style={{
-        width: isMobile ? "100%" : `${leftWidth}%`,
-        "--panel-bg": colors.bgPanel,
-        "--panel-border": colors.border,
-        "--panel-header": colors.bgHeader,
-        "--accent-color": colors.accent,
-        "--text-muted": colors.textMuted,
+        width:  isMobile ? "100%" : `${leftWidth}%`,
+        height: isMobile ? "100%" : undefined,
+        "--panel-bg":      colors.bgPanel,
+        "--panel-border":  colors.border,
+        "--panel-header":  colors.bgHeader,
+        "--accent-color":  colors.accent,
+        "--text-muted":    colors.textMuted,
       }}
       className="box-border bg-[var(--panel-bg)] border border-[var(--panel-border)] flex flex-col overflow-hidden rounded-lg font-mono"
     >
